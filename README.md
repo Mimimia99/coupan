@@ -428,7 +428,9 @@ public boolean modifyStock(HttpServletRequest request, HttpServletResponse respo
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 쿠폰 시스템(coupon)이 장애가 나면 예약도 못하는 것을 확인
 
-쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c)
+쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c) :8081 포트 확인 안됨
+
+![image](https://user-images.githubusercontent.com/84000890/124409949-58319c80-dd84-11eb-91a6-a89c1d659928.png)
 
 ↓쿠폰구매하기(order)
 ```
@@ -436,7 +438,8 @@ http POST http://localhost:8082/orders couponId=2 customerId=5 amt=18000 qty=2 o
 ```
 < Fail >
 ↓ 쿠폰구매 시 500 error 발생
-![image](https://user-images.githubusercontent.com/84000890/124350012-0e826e00-dc2d-11eb-8500-d58fc1bfe71c.png)
+
+![image](https://user-images.githubusercontent.com/84000890/124409961-5ec01400-dd84-11eb-8e89-9a771ae38726.png)
 
 
 - 쿠폰(coupon) 서비스 재기동
@@ -552,11 +555,11 @@ server:
 - gateway 테스트
 
 ```
-http POST http://localhost:8088/orders couponId=2 customerId=3 amt=18000 qty=4 orderDate=202107022050 status=Ordered 
+http POST http://localhost:8088/coupons couponId=1 couponName=승마체험 stock=1000 amt=15000 
 ```
-↓ gateway 8080포트로 order 처리 시,  8082 포트로 링크되어 정상 처리
+↓ gateway 8088포트로 쿠폰 등록 처리 시,  8081 포트로 링크되어 정상 처리
 
-![image](https://user-images.githubusercontent.com/84000890/124371661-0115c400-dcbf-11eb-8184-d1a396996a52.png)
+![image](https://user-images.githubusercontent.com/84000890/124410065-929b3980-dd84-11eb-944f-85de1ea81a92.png)
 
 
 ## 비동기식 호출(Pub/Sub)
