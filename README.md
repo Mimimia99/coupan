@@ -611,18 +611,22 @@ http POST http://localhost:8088/coupons couponId=1 couponName=승마체험 stock
 ```
 - 구매 시스템(order)는 결제 시스템(pay)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, pay 서비스가 유지보수로 인해 잠시 내려간 상태라도 쿠폰 구매가 진행해도 문제 없다.(시간적 디커플링)
   
-↓ 업체(store) 서비스를 잠시 내려놓음(ctrl+c)
+↓ 업체(store) 서비스를 잠시 내려놓음(ctrl+c)  :8083 포트 확인되지 않음
 
-![image](https://user-images.githubusercontent.com/84000890/124371908-4d620380-dcc1-11eb-81d0-4236ceb29d47.png)
+![image](https://user-images.githubusercontent.com/84000890/124410481-882d6f80-dd85-11eb-9323-99055f0538fa.png)
 
 ↓ 쿠폰 구매하기(order)
 ```
-http POST http://localhost:8088/orders couponId=2 customerId=4 amt=18000 qty=1 orderDate=202107022055 status=Ordered
+http POST http://localhost:8082/orders couponId=2 customerId=4 amt=18000 qty=1 orderDate=202107051135 status=Ordered
 ```
 
 < Success >
 
-![image](https://user-images.githubusercontent.com/84000890/124371962-b3e72180-dcc1-11eb-929b-afd287346282.png)
+![image](https://user-images.githubusercontent.com/84000890/124410526-a5fad480-dd85-11eb-87b1-99ae44c048ee.png)
+
+↓ pay와 연동되지 않아 mypage에서 확인 시, pay 시스템의 처리 영역은 확인되지 않는다. ex) payDate , status
+
+![image](https://user-images.githubusercontent.com/84000890/124410535-aa26f200-dd85-11eb-8f09-69d6ca634dc6.png)
 
 
 ## Deploy / Pipeline
