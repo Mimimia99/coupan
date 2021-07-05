@@ -447,24 +447,24 @@ mvn spring-boot:run
 
 - 쿠폰구매하기(order)
 ```
-http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=2021070100100 status=Ordered
+http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=202107051030 status=Ordered
 ```
 < Success >
 
-![image](https://user-images.githubusercontent.com/84000890/124350126-cd3e8e00-dc2d-11eb-9800-5864beba66b1.png)
+![image](https://user-images.githubusercontent.com/84000890/124409222-d9882f80-dd82-11eb-90e5-2bac7f41171b.png)
 
-- 쿠폰 수량 확인을 통해 정상 req/res 처리 여부 확인
+- 쿠폰 수량이 변경되었는지 확인을 통해 정상 req/res 처리 여부 확인
 ↓ 최초 쿠폰 등록 시 1,000건 등록
 
-![image](https://user-images.githubusercontent.com/84000890/124350557-4939d580-dc30-11eb-967e-9d4f15006dde.png)
+![image](https://user-images.githubusercontent.com/84000890/124409272-f3c20d80-dd82-11eb-9795-ff0a5d60dbba.png)
 
 ↓ 동일 쿠폰에 대해 2건 구매 완료
 
-![req_res_2_쿠폰구매_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350323-06c3c900-dc2f-11eb-8b1e-cc07db587734.jpg)
+![image](https://user-images.githubusercontent.com/84000890/124409339-1e13cb00-dd83-11eb-965f-ac81c946e5d5.png)
 
 ↓ 쿠폰 재고가 998건으로 구매된 쿠폰 수만큼 감소
 
-![image](https://user-images.githubusercontent.com/84000890/124350614-856d3600-dc30-11eb-917d-93905da88747.png)
+![image](https://user-images.githubusercontent.com/84000890/124409439-426fa780-dd83-11eb-91d1-4852e165641a.png)
 
 
 
