@@ -709,6 +709,7 @@ kubectl get all -n coupan
 ![image](https://user-images.githubusercontent.com/84000890/124416053-1529f600-dd91-11eb-9e31-c200902a56f5.png)
 
 
+
 ## 서킷 브레이킹(Circuit Breaking)
 
 * 서킷 브레이킹 프레임워크의 선택 :  Spring FeignClient + Hystrix 사용하여 Circuit breaking 구현함
@@ -753,48 +754,62 @@ hystrix:
 ```
 $ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
 ```
+![image](https://user-images.githubusercontent.com/84000890/124469554-783d7c00-ddd5-11eb-9c85-72e1ef9a3730.png)
 
 앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며
 밀린 부하가 처리되면서 다시 요청을 받기 시작함
 
-- Availability 가 높아진 것을 확인 (siege) [수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- Availability 가 높아진 것을 확인 (siege) 
 
-![image](https://user-images.githubusercontent.com/84000863/122497960-454f6600-d029-11eb-9a72-09992ab1baba.png)
+![image](https://user-images.githubusercontent.com/84000890/124469595-84c1d480-ddd5-11eb-9789-0f8890d09c53.png)
+
+↓ 실패/성공 건을 보통 대략 0.9초 이상 수행된 대상은 DB 동작된 것으로 확인됨
+
+![image](https://user-images.githubusercontent.com/84000890/124469629-90150000-ddd5-11eb-9d95-998554bc943e.png)
 
 
 
 ### Autoscale (HPA)
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
+- 진행 전 기본 배포 상태
+
+![image](https://user-images.githubusercontent.com/84000890/124469846-d79b8c00-ddd5-11eb-8f6d-80d1d7e3cfd3.png)
+
 
 - 쿠폰 구매(order) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 1프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=1
+kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=30 -n auto
 
-kubectl get hpa
+kubectl get hpa -n auto
 ```
-[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-![image](https://user-images.githubusercontent.com/84000863/122494497-71b4b380-d024-11eb-948d-97ef4a8628ae.png)
+![image](https://user-images.githubusercontent.com/84000890/124470021-04e83a00-ddd6-11eb-8efa-37bc3fae8451.png)
+
 
 - CB 에서 했던 방식대로 워크로드를 30초 동안 걸어준다.
 ```
-$ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
+$ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"15000", "status":"ordered"}'
 ```
+![image](https://user-images.githubusercontent.com/84000890/124470087-1f221800-ddd6-11eb-8c64-b5bf81681a01.png)
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
 watch -n 1 kubectl get pod
 ```
 
-- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
-[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-![image](https://user-images.githubusercontent.com/84000863/122336985-a1a67d00-cf78-11eb-8be9-d1700f67ceb2.png)
 
 
-- siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. [수정 : & percent 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  (동일 워크로드 CB 대비 2.70% -> 84.10% 성공률 향상)
+- 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다
 
-![image](https://user-images.githubusercontent.com/84000863/122337016-ad923f00-cf78-11eb-86b9-c3a6e08373a0.png)
+![image](https://user-images.githubusercontent.com/84000890/124470193-45e04e80-ddd6-11eb-85e9-aab2d4516142.png)
+
+
+
+- siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
+  (동일 워크로드 CB 대비 3.83% -> 50.6% 성공률 향상)
+
+![image](https://user-images.githubusercontent.com/84000890/124470165-3d881380-ddd6-11eb-9e76-f1107492f7cc.png)
+
 
 
 ## 무정지 재배포
@@ -805,12 +820,14 @@ watch -n 1 kubectl get pod
 ```
 $ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
 ```
-- Readiness가 설정되지 않은 yml 파일로 배포 중 버전1에서 버전2로 업그레이드 시 서비스 요청 처리 실패
+- Readiness가 설정되지 않은 yml 파일로 배포 중 버전3에서 버전4로 업그레이드 시 서비스 요청 처리 실패
 ```
-kubectl set image deploy order user18skccacr.azurecr.io/order:v2
+kubectl set image deploy order order=user18skccacr.azurecr.io/order:v4 -n read
 ```
-[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-![image](https://user-images.githubusercontent.com/84000863/122378900-53f23a80-cfa1-11eb-81ab-2c8b60a8a79b.png)
+
+↓ 버전 업그레이드 시작과 동시에 에러 발생
+
+![image](https://user-images.githubusercontent.com/84000890/124468725-71fad000-ddd4-11eb-984d-7e7ca77c3dc7.png)
 
 - deployment.yml에 readiness 옵션을 추가
 ```
@@ -823,13 +840,23 @@ kubectl set image deploy order user18skccacr.azurecr.io/order:v2
    failureThreshold: 5          
 ```
 
-- readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+↓ 버전은 다시 한번 버전 3 상태로 맞춤
+![image](https://user-images.githubusercontent.com/84000890/124468939-b25a4e00-ddd4-11eb-94c8-f50f3c1a6212.png)
+
+
+- 동일하게 seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+$ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
+```
+
+↓ 버전 4로 업그레이드 진행
+![image](https://user-images.githubusercontent.com/84000890/124469148-f51c2600-ddd4-11eb-82cd-680953c23dd3.png)
+
+
+- readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
 ![image](https://user-images.githubusercontent.com/84000863/122379442-d418a000-cfa1-11eb-8b67-fad7b18e64b1.png)
 
-- 기존 버전과 새 버전의 product pod 공존 중[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-![image](https://user-images.githubusercontent.com/84000863/122379354-c06d3980-cfa1-11eb-97cc-2e28e1902117.png)
 
 
 ## ConfigMap
@@ -902,9 +929,11 @@ kubectl get configmap apiurl -o yaml
 - ConfigMap 설정 정상 여부 확인 : req/res 처리 정상 여부 확인
 
 ↓ 쿠폰 구매 정상 처리
+
 ![image](https://user-images.githubusercontent.com/84000890/124415826-992fae00-dd90-11eb-8700-5a66c7cd8663.png)
 
 ↓ 수량도 정상 변경 처리
+
 ![image](https://user-images.githubusercontent.com/84000890/124415831-9f258f00-dd90-11eb-8a7f-b4d09715396e.png)
 
 
