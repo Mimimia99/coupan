@@ -956,6 +956,7 @@ kubectl get configmap apiurl -o yaml
 ![image](https://user-images.githubusercontent.com/84000890/124466540-b46edd80-ddd1-11eb-9a60-2628073de341.png)
  
 - order에 liveness 적용 확인 
+
 ![image](https://user-images.githubusercontent.com/84000890/124466634-c5b7ea00-ddd1-11eb-8f49-19e924dccd61.png)
 
 - order 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
