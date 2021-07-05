@@ -19,7 +19,7 @@ import java.util.List;
         produces = "application/json;charset=UTF-8")
 
 public boolean modifyStock(HttpServletRequest request, HttpServletResponse response)
-        throws Exception {
+        {
                 boolean status = false;
                 Long couponId = Long.valueOf(request.getParameter("couponId"));
                 int qty = Integer.parseInt(request.getParameter("qty"));
@@ -28,12 +28,15 @@ public boolean modifyStock(HttpServletRequest request, HttpServletResponse respo
 
                 if(coupon != null){
                         if (coupon.getStock() >= qty) {
+
                                 coupon.setStock(coupon.getStock() - qty);
                                 couponRepository.save(coupon);
-                                status = true;
+                                status = true;                               
                         }
-                }
+                  }                         
 
                 return status;
         }
+
+        
  }

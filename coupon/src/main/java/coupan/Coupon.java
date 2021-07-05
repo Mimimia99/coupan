@@ -26,6 +26,7 @@ public class Coupon {
     }
     @PreUpdate
     public void onPreUpdate(){
+
         StockModified stockModified = new StockModified();
         BeanUtils.copyProperties(this, stockModified);
         stockModified.publishAfterCommit();

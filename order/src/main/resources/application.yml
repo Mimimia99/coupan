@@ -37,6 +37,10 @@ logging:
     org.springframework.cloud: debug
 server:
   port: 8082
+
+api:
+  url:
+    coupon: http://localhost:8081   
 ---
 
 spring:
@@ -62,3 +66,7 @@ spring:
         event-out:
           destination: coupan
           contentType: application/json
+api:
+  url:
+    coupon: ${configurl}           
+
