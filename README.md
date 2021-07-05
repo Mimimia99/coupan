@@ -706,6 +706,7 @@ kubectl get all -n coupan
 ```
 
 ↓ 배포 
+
 ![image](https://user-images.githubusercontent.com/84000890/124416053-1529f600-dd91-11eb-9e31-c200902a56f5.png)
 
 
@@ -777,9 +778,9 @@ $ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type 
 ![image](https://user-images.githubusercontent.com/84000890/124469846-d79b8c00-ddd5-11eb-8f6d-80d1d7e3cfd3.png)
 
 
-- 쿠폰 구매(order) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 1프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 쿠폰 구매(order) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=30 -n auto
+kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15 -n auto
 
 kubectl get hpa -n auto
 ```
@@ -849,13 +850,9 @@ kubectl set image deploy order order=user18skccacr.azurecr.io/order:v4 -n read
 $ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
 ```
 
-↓ 버전 4로 업그레이드 진행
-![image](https://user-images.githubusercontent.com/84000890/124469148-f51c2600-ddd4-11eb-82cd-680953c23dd3.png)
-
-
 - readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
-![image](https://user-images.githubusercontent.com/84000863/122379442-d418a000-cfa1-11eb-8b67-fad7b18e64b1.png)
+![image](https://user-images.githubusercontent.com/84000890/124469148-f51c2600-ddd4-11eb-82cd-680953c23dd3.png)
 
 
 
