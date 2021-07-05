@@ -673,9 +673,13 @@ az acr build --registry user18skccacr --image user18skccacr.azurecr.io/order:v1 
 cd pay
 az acr build --registry user18skccacr --image user18skccacr.azurecr.io/pay:v1 .
 ```
+
+↓ 이미지 push
+
 ![image](https://user-images.githubusercontent.com/84000890/124414816-608ed500-dd8e-11eb-94b5-4cd1977dfd5b.png)
 
 ↓ 컨테이너레파지토리 확인
+
 ![image](https://user-images.githubusercontent.com/84000890/124414833-6e445a80-dd8e-11eb-9c72-dc0e8c991213.png)
 
 
@@ -701,7 +705,8 @@ kubectl expose deploy pay --type="ClusterIP" --port=8080
 kubectl get all -n coupan
 ```
 
-![image](https://user-images.githubusercontent.com/84000890/124377786-c3c62c00-dce8-11eb-87e2-22b131ef54cb.png)
+↓ 배포 
+![image](https://user-images.githubusercontent.com/84000890/124416053-1529f600-dd91-11eb-9e31-c200902a56f5.png)
 
 
 ## 서킷 브레이킹(Circuit Breaking)
