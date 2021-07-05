@@ -763,7 +763,7 @@ $ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type 
 
 ![image](https://user-images.githubusercontent.com/84000890/124469595-84c1d480-ddd5-11eb-9789-0f8890d09c53.png)
 
-↓ 실패/성공 건을 보통 대략 0.9초 이상 수행된 대상은 DB 동작된 것으로 확인됨
+↓ 실패/성공 건을 보통 대략 0.9초 이상 수행 시 풀렸다가 다시 CB 동작이  것으로 확인됨
 
 ![image](https://user-images.githubusercontent.com/84000890/124469629-90150000-ddd5-11eb-9d95-998554bc943e.png)
 
