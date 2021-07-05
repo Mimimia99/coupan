@@ -229,7 +229,7 @@ public interface CouponRepository extends PagingAndSortingRepository<Coupon, Lon
 
 ```
 # order 서비스의 쿠폰구매 처리
-http POST http://localhost:8082/orders couponId=1 customerId=2 amt=15000 qty=2 orderDate=202107020010 status=Ordered
+http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=202107051030 status=Ordered
 
 # 구매 상태 확인
 http GET http://localhost:8082/orders
