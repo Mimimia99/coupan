@@ -120,7 +120,7 @@
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/84000863/122320373-15d32780-cf5d-11eb-95b7-23935cda9bb4.png)
+![image](https://user-images.githubusercontent.com/84000890/124407730-98425080-dd7f-11eb-9716-9b8ad6dd61fa.png)
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
     - 호출관계에서 PubSub 과 Req/Resp 를 구분함
@@ -335,11 +335,12 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - 쿠폰구매 후의 myPage
 
-![image](https://user-images.githubusercontent.com/84000890/124371590-32da5b00-dcbe-11eb-8566-f1981887c6e0.png)
+![image](https://user-images.githubusercontent.com/84000890/124408930-451dcd00-dd82-11eb-8cb6-f667c393c52e.png)
 
 - 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능)
+- 
+![image](https://user-images.githubusercontent.com/84000890/124408981-61ba0500-dd82-11eb-8ac2-82d682e03306.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124371594-3a99ff80-dcbe-11eb-971f-67e1623526dd.png)
 
 
 
