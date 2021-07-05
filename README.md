@@ -893,7 +893,7 @@ public interface CouponService {
 
 ```
 kubectl create configmap apiurl --from-literal=url=http://coupon:8080
-kubectl get configmap storecm -o yaml
+kubectl get configmap apiurl -o yaml
 ```
 
 ![image](https://user-images.githubusercontent.com/84000890/124415681-51a92200-dd90-11eb-91bd-cd1c57565b7f.png)
@@ -911,14 +911,27 @@ kubectl get configmap storecm -o yaml
 
 ## Self-Healing (Liveness Probe)
 
-- 구매(order) 서비스의 deployment.yaml에 liveness probe 옵션 추가 [수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- 구매(order) 서비스의 deployment.yaml에 liveness probe 옵션 추가 
+- 5초 간격으로 /tmp/healthy 에 접근해도록 강제 설정
+```
+            args:
+            - /bin/sh
+            - -c
+            - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
+            livenessProbe:
+              exec:
+                command:
+                - cat
+                - /tmp/healthy
+              initialDelaySeconds: 5
+              periodSeconds: 5 
+```
 
-![image](https://user-images.githubusercontent.com/84000863/122364364-a842ed80-cf94-11eb-8a45-980901aeaf3b.png)
+![image](https://user-images.githubusercontent.com/84000890/124466540-b46edd80-ddd1-11eb-9a60-2628073de341.png)
  
-- order에 liveness 적용 확인 [수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- order에 liveness 적용 확인 
+![image](https://user-images.githubusercontent.com/84000890/124466634-c5b7ea00-ddd1-11eb-8f49-19e924dccd61.png)
 
-![image](https://user-images.githubusercontent.com/84000863/122364275-95301d80-cf94-11eb-9312-7bbcab0a00d8.png)
+- order 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
 
-- order 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함 [수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-![image](https://user-images.githubusercontent.com/84000863/122365346-8d24ad80-cf95-11eb-855a-e8e724d273f6.png)
+![image](https://user-images.githubusercontent.com/84000890/124466572-ba64be80-ddd1-11eb-88b8-40678c9ea1ac.png)
