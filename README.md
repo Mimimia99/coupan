@@ -653,48 +653,50 @@ mvn package
 cd pay
 mvn package
 ```
-↓ sample : pay 
-![image](https://user-images.githubusercontent.com/84000890/124375978-b8bace00-dcdf-11eb-9dcb-28b631ab20ae.png)
+↓ sample : order
+![image](https://user-images.githubusercontent.com/84000890/124414754-448b3380-dd8e-11eb-8ad7-cff7825c5b76.png)
 
 - 도커라이징(Dockerizing) : Azure Container Registry(ACR)에 Docker Image Push하기
 ```
 cd coupon
-az acr build --registry quiz526skacr --image quiz526skacr.azurecr.io/coupon:v1 .
+az acr build --registry user18skccacr --image user18skccacr.azurecr.io/coupon:v1 .
 
 cd customercenter
-az acr build --registry quiz526skacr --image quiz526skacr.azurecr.io/customercenter:v2 .
+az acr build --registry user18skccacr --image user18skccacr.azurecr.io/customercenter:v1 .
 
 cd gateway
-az acr build --registry quiz526skacr --image quiz526skacr.azurecr.io/gateway:v2 .
+az acr build --registry user18skccacr --image user18skccacr.azurecr.io/gateway:v1 .
 
 cd order
-az acr build --registry quiz526skacr --image quiz526skacr.azurecr.io/order:v2 .
+az acr build --registry user18skccacr --image user18skccacr.azurecr.io/order:v1 .
 
 cd pay
-az acr build --registry quiz526skacr --image quiz526skacr.azurecr.io/pay:v2 .
+az acr build --registry user18skccacr --image user18skccacr.azurecr.io/pay:v1 .
 ```
+![image](https://user-images.githubusercontent.com/84000890/124414816-608ed500-dd8e-11eb-94b5-4cd1977dfd5b.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124377531-4bab3680-dce7-11eb-9aa7-8f57be20a037.png)
+↓ 컨테이너레파지토리 확인
+![image](https://user-images.githubusercontent.com/84000890/124414833-6e445a80-dd8e-11eb-9c72-dc0e8c991213.png)
 
 
 - 컨테이너라이징(Containerizing) : Deployment 생성
 ```
-kubectl create deploy coupon --image=quiz526skacr.azurecr.io/coupon:v1 -n coupan
-kubectl create deploy customercenter --image=quiz526skacr.azurecr.io/customercenter:v2 -n coupan
-kubectl create deploy gateway --image=quiz526skacr.azurecr.io/gateway:v2 -n coupan
-kubectl create deploy order --image=quiz526skacr.azurecr.io/order:v2 -n coupan
-kubectl create deploy pay --image=quiz526skacr.azurecr.io/pay:v2 -n coupan
+kubectl create deploy coupon --image=user18skccacr.azurecr.io/coupon:v1
+kubectl create deploy customercenter --image=user18skccacr.azurecr.io/customercenter:v1
+kubectl create deploy gateway --image=user18skccacr.azurecr.io/gateway:v1
+kubectl create deploy order --image=user18skccacr.azurecr.io/order:v1
+kubectl create deploy pay --image=user18skccacr.azurecr.io/pay:v1
 
 kubectl get all
 ```
 
 - 컨테이너라이징(Containerizing) : Service 생성 확인
 ```
-kubectl expose deploy coupon --type="ClusterIP" --port=8080 -n coupan
-kubectl expose deploy customercenter --type="ClusterIP" --port=8080 -n coupan
-kubectl expose deploy gateway --type=LoadBalancer --port=8080 -n coupan
-kubectl expose deploy order --type="ClusterIP" --port=8080 -n coupan
-kubectl expose deploy pay --type="ClusterIP" --port=8080 -n coupan
+kubectl expose deploy coupon --type="ClusterIP" --port=8080
+kubectl expose deploy customercenter --type="ClusterIP" --port=8080
+kubectl expose deploy gateway --type=LoadBalancer --port=8080
+kubectl expose deploy order --type="ClusterIP" --port=8080
+kubectl expose deploy pay --type="ClusterIP" --port=8080
 
 kubectl get all -n coupan
 ```
@@ -800,7 +802,7 @@ $ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "
 ```
 - Readiness가 설정되지 않은 yml 파일로 배포 중 버전1에서 버전2로 업그레이드 시 서비스 요청 처리 실패
 ```
-kubectl set image deploy order quiz526skacr.azurecr.io/order:v2
+kubectl set image deploy order user18skccacr.azurecr.io/order:v2
 ```
 [수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ![image](https://user-images.githubusercontent.com/84000863/122378900-53f23a80-cfa1-11eb-81ab-2c8b60a8a79b.png)
@@ -826,33 +828,79 @@ kubectl set image deploy order quiz526skacr.azurecr.io/order:v2
 
 
 ## ConfigMap
-
+- req/res 호출 시 피호출되는 경로에 대해서 환경변수로 받아 처리하도록 ConfigMap적용
 - order 서비스의 deployment.yml 파일에 아래 항목 추가
 ```
-env:
-   - name: STATUS
-     valueFrom:
-       configMapKeyRef:
-         name: storecm
-         key: status
+          env:
+            - name: configurl			
+              valueFrom:
+                configMapKeyRef:
+                  name: apiurl
+                  key: url 
+```
+- order 서비스의 application.yml 파일 설정 : local 과 cloud 다른 값으로 처리하도록 설정
+```
+spring:
+  profiles: default
+  
+  ....
+  
+api:
+  url:
+    coupon: http://localhost:8081   
+---
+spring:
+  profiles: docker
+  
+  ....
+  
+api:
+  url:
+    coupon: ${configurl}  
 ```
 
-- order 서비스에 configMap 설정 데이터 가져오도록 아래 항목 추가[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-![image](https://user-images.githubusercontent.com/84000863/122492593-04ebea00-d021-11eb-8000-9e6b55d75ffb.png)
-
-- ConfigMap 생성 및 조회[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- order > CouponService.java 에서 feignClient 호출 시 configMap 설정 데이터 가져오도록 아래 항목 추가
 
 ```
-kubectl create configmap storecm --from-literal=status=Ordered
+package coupan.external;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Date;
+
+//@FeignClient(name="coupon", url="http://localhost:8081")
+//@FeignClient(name="coupon", url="http://coupon:8080")
+@FeignClient(name="coupon", url="${api.url.coupon}")
+
+public interface CouponService {
+    @RequestMapping(method= RequestMethod.GET, path="/chkAndModifyStock")
+    public boolean modifyStock(@RequestParam("couponId") Long couponId,
+                            @RequestParam("qty") Integer qty);
+
+}
+```
+
+- ConfigMap 생성 및 조회
+
+```
+kubectl create configmap apiurl --from-literal=url=http://coupon:8080
 kubectl get configmap storecm -o yaml
 ```
 
-![image](https://user-images.githubusercontent.com/84000863/122506477-6455f400-d039-11eb-93b2-2145d21f8e36.png)
+![image](https://user-images.githubusercontent.com/84000890/124415681-51a92200-dd90-11eb-91bd-cd1c57565b7f.png)
 
-- ConfigMap 설정 데이터 조회[수정 : 이미지]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-![image](https://user-images.githubusercontent.com/84000863/122492475-c5bd9900-d020-11eb-9131-16619f8324ab.png)
+- ConfigMap 설정 정상 여부 확인 : req/res 처리 정상 여부 확인
+
+↓ 쿠폰 구매 정상 처리
+![image](https://user-images.githubusercontent.com/84000890/124415826-992fae00-dd90-11eb-8700-5a66c7cd8663.png)
+
+↓ 수량도 정상 변경 처리
+![image](https://user-images.githubusercontent.com/84000890/124415831-9f258f00-dd90-11eb-8a7f-b4d09715396e.png)
 
 
 
