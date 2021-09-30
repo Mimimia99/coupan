@@ -373,131 +373,90 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 ![image](https://user-images.githubusercontent.com/88864740/135380241-ae14e75f-5090-42bd-be48-6f11bf24caf8.png)
 
 
+
 ## 동기식 호출(Req/Resp)
 
-분석단계에서의 조건 중 하나로 구매(order)→쿠폰(coupon)간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
+분석단계에서의 조건 중 하나로 주문(order)→결제(payment)간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어 있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
-- 쿠폰서비스를 호출하기 위하여 FeignClient를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
-
+- 쿠폰서비스를 호출하기 위하여 FeignClient를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
 ```
-# (order) CouponService.java
+# (order) PaymentService.java
 
-package coupan.external;
+package kukka.external;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Date;
 
-//@FeignClient(name="coupon", url="http://localhost:8081")
-@FeignClient(name="coupon", url="http://coupon:8080")
+@FeignClient(name = "payment", url = "${api.url.payment}")
+public interface PaymentService {
 
-public interface CouponService {
-    @RequestMapping(method= RequestMethod.GET, path="/chkAndModifyStock")
-    public boolean modifyStock(@RequestParam("couponId") Long couponId,
-                            @RequestParam("qty") Integer qty);
+    @RequestMapping(method = RequestMethod.GET, path = "/payments")
+    public void payment(@RequestBody Payment payment);
 
 }
 ```
 
-- 예약된 직후(@PostPersist) 재고수량이 업데이트 되도록 처리 (modifyStock 호출)
+- 주문된 직후(@PostPersist) 결제정보가 생성 되어 결제처리(PaymentConfirmed) 되도록 처리 (payment 생성)
 ```
 # Order.java
 
- @PostPersist
-    public void onPostPersist(){
-        boolean rslt = OrderApplication.applicationContext.getBean(coupan.external.CouponService.class)
-        .modifyStock(this.getCouponId(), this.getQty());
+    @PostPersist
+    public void onPostPersist() {
+        Ordered ordered = new Ordered();
+        BeanUtils.copyProperties(this, ordered);
 
-        if (rslt) {
-            this.setStatus("ordered");
-            //this.setStatus(System.getenv("STATUS"));
+        this.setStatus("Ordered");
+        ordered.publishAfterCommit();
 
-            Ordered ordered = new Ordered();
-            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
-            String orderDate = format1.format (System.currentTimeMillis());
-            this.setOrderDate(orderDate);
-            BeanUtils.copyProperties(this, ordered);
-            ordered.publishAfterCommit();            
-        }
+        kukka.external.Payment payment = new kukka.external.Payment();
+        // mappings goes here
 
+        payment.setOrderId(this.getId());
+        payment.setPrice(this.getPrice());
+        payment.setStatus("PaymentConfirmed");
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+        OrderApplication.applicationContext.getBean(kukka.external.PaymentService.class).payment(payment);
 
-
-    }
-    
+    }    
 ```
 
-- 재고수량은 아래와 같은 로직으로 처리
-```
-public boolean modifyStock(HttpServletRequest request, HttpServletResponse response)
-        throws Exception {
-                boolean status = false;
-                Long couponId = Long.valueOf(request.getParameter("couponId"));
-                int qty = Integer.parseInt(request.getParameter("qty"));
+/*-- 작성필요 --*/
 
-                Coupon coupon = couponRepository.findByCouponId(couponId);
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템(payment)이 장애가 나면 예약도 못하는 것을 확인
 
-                if(coupon != null){
-                        if (coupon.getStock() >= qty) {
-                                coupon.setStock(coupon.getStock() - qty);
-                                couponRepository.save(coupon);
-                                status = true;
-                        }
-                }
-
-                return status;
-        }
-```
-
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 쿠폰 시스템(coupon)이 장애가 나면 예약도 못하는 것을 확인
-
-쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c) :8081 포트 확인 안됨
-
-![image](https://user-images.githubusercontent.com/84000890/124409949-58319c80-dd84-11eb-91a6-a89c1d659928.png)
+결제 서비스(payment)를 잠시 내려놓음 (ctrl+c) :8082 포트 확인 안됨
+![image](https://user-images.githubusercontent.com/88864740/135383901-e3e1a21a-b48f-4971-bfb9-eeea097082b0.png)
 
 ↓쿠폰구매하기(order)
 ```
-http POST http://localhost:8082/orders couponId=2 customerId=5 amt=18000 qty=2 orderDate=202107022100 status=ordered
+http POST http://localhost:8081/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000 status="Ordered"
 ```
 < Fail >
 ↓ 쿠폰구매 시 500 error 발생
+![image](https://user-images.githubusercontent.com/88864740/135383961-be910279-e350-4437-8ca1-f12155698283.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124409961-5ec01400-dd84-11eb-8e89-9a771ae38726.png)
-
-
-- 쿠폰(coupon) 서비스 재기동
+- 결제(payment) 서비스 재기동
 ```
-cd coupon
+cd payment
 mvn spring-boot:run
 ```
 
-- 쿠폰구매하기(order)
+- 꽃 구독 주문하기(order)
 ```
-http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=202107051030 status=Ordered
+http POST http://localhost:8081/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000 status="Ordered"
 ```
 < Success >
+![image](https://user-images.githubusercontent.com/88864740/135384366-0240fb28-b4dc-4213-bac8-4f8f0fc23bd1.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124409222-d9882f80-dd82-11eb-90e5-2bac7f41171b.png)
+- 결제완료가 생성되었는지 확인을 통해 정상 req/res 처리 여부 확인
 
-- 쿠폰 수량이 변경되었는지 확인을 통해 정상 req/res 처리 여부 확인
-↓ 최초 쿠폰 등록 시 1,000건 등록
-
-![image](https://user-images.githubusercontent.com/84000890/124409272-f3c20d80-dd82-11eb-9795-ff0a5d60dbba.png)
-
-↓ 동일 쿠폰에 대해 2건 구매 완료
-
-![image](https://user-images.githubusercontent.com/84000890/124409339-1e13cb00-dd83-11eb-965f-ac81c946e5d5.png)
-
-↓ 쿠폰 재고가 998건으로 구매된 쿠폰 수만큼 감소
-
-![image](https://user-images.githubusercontent.com/84000890/124409439-426fa780-dd83-11eb-91d1-4852e165641a.png)
-
+↓ payment 에 결제완료 정보 생성
+![image](https://user-images.githubusercontent.com/88864740/135384483-f1c63fbf-49f5-46bd-aa1a-706652343c17.png)
 
 
 ## Gateway 적용
@@ -515,22 +474,18 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: coupon
-          uri: http://localhost:8081 
-          predicates:
-            - Path=/coupons/** , /chkAndModifyStock/**
         - id: order
+          uri: http://localhost:8081
+          predicates:
+            - Path=/orders/**, /myPages/**
+        - id: payment
           uri: http://localhost:8082
           predicates:
-            - Path=/orders/** 
-        - id: pay
+            - Path=/payments/** 
+        - id: delivery
           uri: http://localhost:8083
           predicates:
-            - Path=/payments/** 
-        - id: customercenter
-          uri: http://localhost:8084
-          predicates:
-            - Path= /mypages/**
+            - Path=/deliveries/**, /orderDetails/**
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -550,22 +505,18 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: coupon
-          uri: http://coupon:8080
-          predicates:
-            - Path=/coupons/** , /chkAndModifyStock/** 
         - id: order
           uri: http://order:8080
           predicates:
-            - Path=/orders/** 
-        - id: pay
-          uri: http://pay:8080
+            - Path=/orders/**, /myPages/**
+        - id: payment
+          uri: http://payment:8080
           predicates:
             - Path=/payments/** 
-        - id: customercenter
-          uri: http://customercenter:8080
+        - id: delivery
+          uri: http://delivery:8080
           predicates:
-            - Path= /mypages/**
+            - Path=/deliveries/**, /orderDetails/**
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -584,80 +535,86 @@ server:
 - gateway 테스트
 
 ```
-http POST http://localhost:8088/coupons couponId=1 couponName=승마체험 stock=1000 amt=15000 
+http POST http://localhost:8088/orders phoneNumber="01055556666" address="Jeju" customerName="Han" flowerType="DaisyBox" price=30000  status="Ordered"
 ```
-↓ gateway 8088포트로 쿠폰 등록 처리 시,  8081 포트로 링크되어 정상 처리
 
-![image](https://user-images.githubusercontent.com/84000890/124410065-929b3980-dd84-11eb-944f-85de1ea81a92.png)
+↓ gateway 8088포트로 쿠폰 등록 처리 시,  8081 포트로 링크되어 정상 처리
+![image](https://user-images.githubusercontent.com/88864740/135384854-c2cdee92-00d2-4112-be68-7cb35b723833.png)
+
 
 
 ## 비동기식 호출(Pub/Sub)
 
-- 구매 시스템(order)에서 처리 후에 결제 시스템(pay)에서 결제되는 행위는 동기식이 아니라 비 동기식으로 처리하여 결제 시스템(pay)의 결제 처리로 인해 구매시스템이 블로킹 되지 않도록 처리한다.
-
-- 이를 위하여 구매완료 되었음을 도메인 이벤트를 카프카로 송출한다(Publish)
+- 결제 시스템(payment)에서  처리 후에 배송 시스템(delivery)에서 배송 처리되는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송 시스템(delivery)의 배송 처리로 인해 주문시스템이 블로킹 되지 않도록 처리한다. 이를 위하여 결제완료 되었음을 도메인 이벤트를 카프카로 송출한다(Publish)
  
 ```
-   @PostPersist
-    public void onPostPersist(){
-        boolean rslt = OrderApplication.applicationContext.getBean(coupan.external.CouponService.class)
-        .modifyStock(this.getCouponId(), this.getQty());
+# Payment.java
 
-        if (rslt) {
-            this.setStatus("ordered");
-            //this.setStatus(System.getenv("STATUS"));
+package kukka;
 
-            Ordered ordered = new Ordered();
-            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
-            String orderDate = format1.format (System.currentTimeMillis());
-            this.setOrderDate(orderDate);
-            BeanUtils.copyProperties(this, ordered);
-            ordered.publishAfterCommit();            
+import javax.persistence.*;
+import org.springframework.beans.BeanUtils;
+import java.util.List;
+import java.util.Date;
+import java.util.Optional;
+
+@Entity
+@Table(name = "Payment_table")
+public class Payment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    private Long orderId;
+    private Long price;
+    private String status;
+
+    @PostPersist
+    public void onPostPersist() {
+
+        if (this.getStatus().equals("Ordered")) {
+            PaymentConfirmed paymentConfirmed = new PaymentConfirmed();
+            BeanUtils.copyProperties(this, paymentConfirmed);
+            paymentConfirmed.setStatus("PaymentConfirmed");
+            paymentConfirmed.publishAfterCommit();
+
+        } 
+    }
+```
+
+- 배송 시스템(delivery)에서는 결제가 발생하면 이벤트를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다. (subscribe)
+```
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPaymentConfirmed_OrderConfirm(@Payload PaymentConfirmed paymentConfirmed) {
+
+        if (paymentConfirmed.isMe()) {
+            System.out.println("##### listener OrderConfirm : " + paymentConfirmed.toJson());
+
+            Delivery delivery = new Delivery();
+            delivery.setOrderId(paymentConfirmed.getOrderId());
+            delivery.setStatus("Delivered");
+            deliveryRepository.save(delivery);
         }
     }
 ```
-- 결제 시스템(pay)에서는 구매가 발생하면 이벤트를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다. (subscribe)
-```
- public void wheneverOrdered_PreparePayment(@Payload Ordered ordered){
 
-        if(ordered.isMe()){            
-            Payment pay = new Payment();
-            pay.setOrderId(ordered.getId());
-            pay.setCouponId(ordered.getCouponId());        
-            pay.setStatus("PayCompleted");
-            pay.setPayAmt(ordered.getAmt() * ordered.getQty());
-
-            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
-            String payDate = format1.format (System.currentTimeMillis());
-            pay.setPayDate(payDate);
-            
-            paymentRepository.save(pay);
-        }
-    }
-    
-...
-
-```
-- 구매 시스템(order)는 결제 시스템(pay)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, pay 서비스가 유지보수로 인해 잠시 내려간 상태라도 쿠폰 구매가 진행해도 문제 없다.(시간적 디커플링)
+- 결제 시스템(payment)는 배송 시스템(delivery)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, 배송 서비스(delivery)가 유지보수로 인해 잠시 내려간 상태라도 꽃 구독 주문 진행에 문제 없다.(시간적 디커플링)
   
-↓ 업체(store) 서비스를 잠시 내려놓음(ctrl+c)  :8083 포트 확인되지 않음
+↓ 배송(delivery) 서비스를 잠시 내려놓음(ctrl+c)  :8082 포트 확인되지 않음
+![image](https://user-images.githubusercontent.com/88864740/135386702-13c75dd4-3100-42a3-a175-d9f0527165c7.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124410481-882d6f80-dd85-11eb-9323-99055f0538fa.png)
-
-↓ 쿠폰 구매하기(order)
+↓ 꽃 구독 주문하기(order)
 ```
-http POST http://localhost:8082/orders couponId=2 customerId=4 amt=18000 qty=1 orderDate=202107051135 status=Ordered
+http POST http://localhost:8081/orders phoneNumber="01012345678" address="Busan" customerName="PARK" flowerType="LilyBox" price=15000 status="Ordered"
 ```
 
 < Success >
+![image](https://user-images.githubusercontent.com/88864740/135386799-66c14667-cf9c-4997-82b2-234f9dec67db.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124410526-a5fad480-dd85-11eb-87b1-99ae44c048ee.png)
+↓ delivery 와 연동되지 않아 myPage에서 확인 시, delivery 시스템의 처리 영역은 확인되지 않는다. ex) deliveryStatus
+![image](https://user-images.githubusercontent.com/88864740/135387132-0a9042f7-e4c4-46c8-87cc-134a99bf44fc.png)
 
-↓ pay와 연동되지 않아 mypage에서 확인 시, pay 시스템의 처리 영역은 확인되지 않는다. ex) payDate , status
-
-![image](https://user-images.githubusercontent.com/84000890/124410535-aa26f200-dd85-11eb-8f09-69d6ca634dc6.png)
-
-
+<!-- start -->
 ## Deploy / Pipeline
 
 - 소스 가져오기
