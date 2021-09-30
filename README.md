@@ -573,7 +573,7 @@ http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.
 ```
 
 ↓ gateway 8088포트로 쿠폰 등록 처리 시,  http://order:8080/ 으로 링크되어 정상 처리
-![image](https://user-images.githubusercontent.com/88864740/135503933-6be603f0-51bb-4011-858a-e96852767b43.png)
+![image](https://user-images.githubusercontent.com/88864740/135504288-5d1d3c76-18fa-40f7-996a-e6a19cff47bf.png)
 
 
 
@@ -634,19 +634,19 @@ public class Payment {
 
 - 결제 시스템(payment)는 배송 시스템(delivery)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, 배송 서비스(delivery)가 유지보수로 인해 잠시 내려간 상태라도 꽃 구독 주문 진행에 문제 없다.(시간적 디커플링)
   
-↓ 배송(delivery) 서비스를 잠시 내려놓음(ctrl+c)  :8082 포트 확인되지 않음
-![image](https://user-images.githubusercontent.com/88864740/135386702-13c75dd4-3100-42a3-a175-d9f0527165c7.png)
+↓ 배송(delivery) 서비스를 잠시 내려놓음
+![image](https://user-images.githubusercontent.com/88864740/135504520-f85666d0-363c-408f-bdd6-e35fb3a05dd3.png)
 
 ↓ 꽃 구독 주문하기(order)
 ```
-http POST http://localhost:8081/orders phoneNumber="01012345678" address="Busan" customerName="PARK" flowerType="LilyBox" price=15000 status="Ordered"
+http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01055556666" address="Jeju" customerName="Han" flowerType="DaisyBox" price=30000  status="Ordered"
 ```
 
 < Success >
-![image](https://user-images.githubusercontent.com/88864740/135386799-66c14667-cf9c-4997-82b2-234f9dec67db.png)
+![image](https://user-images.githubusercontent.com/88864740/135504754-0e5b8058-0983-473e-a96d-f27e5caeec5b.png)
 
 ↓ delivery 와 연동되지 않아 myPage에서 확인 시, delivery 시스템의 처리 영역은 확인되지 않는다. ex) deliveryStatus
-![image](https://user-images.githubusercontent.com/88864740/135387132-0a9042f7-e4c4-46c8-87cc-134a99bf44fc.png)
+![image](https://user-images.githubusercontent.com/88864740/135505174-5b8bffa6-1b00-44a2-bdb5-d8ebd51040c4.png)
 
 
 ## Deploy / Pipeline
@@ -700,39 +700,39 @@ phases:
           apiVersion: v1
           kind: Service
           metadata:
-            name: $_PROJECT_NAME
+            name: order
             labels:
-              app: $_PROJECT_NAME
+              app: order
           spec:
             ports:
               - port: 8080
                 targetPort: 8080
             selector:
-              app: $_PROJECT_NAME
+              app: order
           EOF
       - |
-          cat  <<EOF | kubectl apply -f -
+          cat <<EOF | kubectl apply -f -
           apiVersion: apps/v1
           kind: Deployment
           metadata:
-            name: $_PROJECT_NAME
+            name: order
             labels:
-              app: $_PROJECT_NAME
+              app: order
           spec:
             replicas: 1
             selector:
               matchLabels:
-                app: $_PROJECT_NAME
+                app: order
             template:
               metadata:
                 labels:
-                  app: $_PROJECT_NAME
+                  app: order
               spec:
                 containers:
-                  - name: $_PROJECT_NAME
+                  - name: order
                     image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                     ports:
-                      - containerPort: 8080
+                      - containerPort: 8080 
                     readinessProbe:
                       httpGet:
                         path: /actuator/health
