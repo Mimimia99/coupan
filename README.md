@@ -238,6 +238,7 @@ http POST http://localhost:8081/orders phoneNumber="01012341234" address="SEOUL"
 
 # 주문 상태 확인
 http GET http://localhost:8081/orders
+http GET http://localhost:8081/myPages
 
 # 결제 상태 확인
 http GET http://localhost:8082/payments
@@ -245,7 +246,9 @@ http GET http://localhost:8082/payments
 # 주문상세 확인
 http GET http://localhost:8083/orderDetails
 
-# 배송 처리 확인
+# 배송 처리 후 확인
+
+http POST http://localhost:8083/deliveries orderId=1 status="Delivered"
 http GET http://localhost:8083/deliveries
 
 # MyPage 확인
@@ -260,6 +263,7 @@ http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.
 
 # 주문 상태 확인
 http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/myPages
 
 # 결제 상태 확인
 http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/payments
@@ -267,7 +271,8 @@ http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.a
 # 주문상세 확인
 http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orderDetails
 
-# 배송 처리 확인
+# 배송 처리 후 확인
+http POST  http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/deliveries orderId=1 status="Delivered"
 http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/deliveries
 
 # MyPage 확인
@@ -390,11 +395,10 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 ```
 
 - 꽃 구독 주문 후의 MyPage
-![image](https://user-images.githubusercontent.com/88864740/135387714-1c0adc34-63bf-421f-8f7a-2dbdd5b2b657.png)
+![image](https://user-images.githubusercontent.com/88864740/135501174-5d33dc70-99ee-498b-b0cf-97359ace4ee7.png)
 
 - 꽃 구독 주문 취소 후의 myPage (변경된 상태 노출값 확인 가능)
-![image](https://user-images.githubusercontent.com/88864740/135380241-ae14e75f-5090-42bd-be48-6f11bf24caf8.png)
-
+![image](https://user-images.githubusercontent.com/88864740/135501962-c939538f-7a14-431b-9981-d0ea7c9d1c63.png)
 
 
 ## 동기식 호출(Req/Resp)
