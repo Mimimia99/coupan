@@ -799,19 +799,20 @@ hystrix:
 - 30초 동안 실시
 
 ```
-$ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
+siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"AAAA","price":10000}'
 ```
+↓변경필요!!
 ![image](https://user-images.githubusercontent.com/84000890/124469554-783d7c00-ddd5-11eb-9c85-72e1ef9a3730.png)
 
 앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며
 밀린 부하가 처리되면서 다시 요청을 받기 시작함
 
 - Availability 가 높아진 것을 확인 (siege) 
-
+↓변경필요!!
 ![image](https://user-images.githubusercontent.com/84000890/124469595-84c1d480-ddd5-11eb-9789-0f8890d09c53.png)
 
 ↓ 실패/성공 건을 보통 대략 0.9초 이상 수행 시 풀렸다가 다시 CB 동작이  것으로 확인됨
-
+↓변경필요!!
 ![image](https://user-images.githubusercontent.com/84000890/124469629-90150000-ddd5-11eb-9d95-998554bc943e.png)
 
 
