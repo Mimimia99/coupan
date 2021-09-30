@@ -124,7 +124,7 @@
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/88864740/135376202-c4b8b317-c098-458d-8895-5f25c1a9ca85.png)
+![image](https://user-images.githubusercontent.com/88864740/135376399-c8afcd19-63fb-4463-a161-25667a7317b2.png)
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
     - 호출관계에서 PubSub 과 Req/Resp 를 구분함
@@ -133,135 +133,166 @@
 
 # 구현:
 
-구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 8084이다)
+구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 8083이다)
 
 ```
-cd coupon
+cd order
 mvn spring-boot:run
 
-cd order
+cd payment
 mvn spring-boot:run 
 
-cd pay
-mvn spring-boot:run  
-
-cd customercenter
+cd delivery
 mvn spring-boot:run
-
 ```
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 coupon가 그 예시이다.
-
+- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 Order가 그 예시이다.
 ```
-package coupan;
-
-import javax.persistence.*;
-import org.springframework.beans.BeanUtils;
-import java.util.List;
-import java.util.Date;
-
+package kukka;
+import javax.persistence.*;
+import org.springframework.beans.BeanUtils;
+import java.util.List;
+import java.util.Date;
 @Entity
-@Table(name="Coupon_table")
-public class Coupon {
-
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private Long id;
-    private Long couponId;
-    private String couponName;
-    private Integer amt;
-    private Integer stock;
-
+@Table(name = "Order_table")
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    private String phoneNumber;
+    private String address;
+    private String customerName;
+    private String status;
+    private String flowerType;
+    private Long price;
 
 .....
 
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public Long getCouponId() {
-        return couponId;
-    }
-
-    public void setCouponId(Long couponId) {
-        this.couponId = couponId;
-    }
-    public String getCouponName() {
-        return couponName;
-    }
-
-    public void setCouponName(String couponName) {
-        this.couponName = couponName;
-    }
-    public Integer getAmt() {
-        return amt;
-    }
-
-    public void setAmt(Integer amt) {
-        this.amt = amt;
-    }
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+    public String getAddress() {
+        return address;
+    }
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    public String getCustomerName() {
+        return customerName;
+    }
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+    public String getStatus() {
+        return status;
+    }
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public String getFlowerType() {
+        return flowerType;
+    }
+    public void setFlowerType(String flowerType) {
+        this.flowerType = flowerType;
+    }
+    public Long getPrice() {
+        return price;
+    }
+    public void setPrice(Long price) {
+        this.price = price;
+    }
 }
 
 ```
-- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
+
+   - Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여   
+     Spring Data REST 의 RestRepository 를 적용하였다
 ```
-package coupan;
-
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-
-@RepositoryRestResource(collectionResourceRel="coupons", path="coupons")
-public interface CouponRepository extends PagingAndSortingRepository<Coupon, Long>{
-    Coupon findByCouponId(Long couponId);
-
+package kukka;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import java.util.List;
+@RepositoryRestResource(collectionResourceRel="orders", path="orders")
+public interface OrderRepository extends PagingAndSortingRepository<Order, Long> {
 }
-```
-- 적용 후 REST API 의 테스트 : 쿠폰구매(order) 시, 쿠폰(coupon) 시스템 내 coupon 수량 수정되므로 order 서비스에 대한 정상 처리 여부를 확인한다.
 
 ```
-# order 서비스의 쿠폰구매 처리
-http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=202107051030 status=Ordered
 
-# 구매 상태 확인
-http GET http://localhost:8082/orders
+    - 적용 후 REST API 의 테스트: 꽃 구독 주문(order) 시, 결제(payment) 시스템 내  결제내역 생성되므로 order 서비스에 대한 정상 처리 여부를 확인한다.
+```
+# order 서비스의 꽃 구독 주문 처리
+http POST http://localhost:8081/orders phoneNumber="01012341234" address="SEOUL" customerName="KIM" flowerType="MixBox" price=10000 
 
+# 주문 상태 확인
+http GET http://localhost:8081/orders
+
+# 결제 상태 확인
+http GET http://localhost:8082/payments
+
+# 주문상세 확인
+http GET http://localhost:8083/orderDetails
+
+# 배송 처리 확인
+http GET http://localhost:8083/deliveries
+
+# MyPage 확인
+http GET http://localhost:8081/myPages
 ```
 
 
 ## 폴리글랏 퍼시스턴스
 
-coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
+order 서비스와 payment 서비스는 h2 DB로 구현하고, 그와 달리 delivery 서비스의 경우 mySQL DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.(Spring Cloud JPA를 사용하여 개발하였기 때문에 소스의 변경 부분은 전혀 없으며, 단지 데이터베이스 제품의 설정 (pom.xml, application.yml) 만으로 mysql 에 부착시켰다.)
 
-- coupon, order 서비스의 pom.xml 설정
+
+- Order, payment 서비스의 pom.xml 설정
 ```
+# pom.yml (Order, Payment)
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 ```
-- pay 서비스의 pom.xml 설정
-```
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 
+- Delivery 서비스의 pom.xml 설정
 ```
+# pom.yml (Delivery)
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.25</version>
+		</dependency>
+		<dependency>
+```
+
+- Delivery 의 application.yml
+```
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://mysql-1631696398.default.svc.cluster.local:3306/class?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: RmDqZpf2rq
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    generate-ddl: true
+    show-sql: true 
+```
+
+
 ## CQRS
 
 Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
