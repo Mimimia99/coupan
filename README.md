@@ -754,6 +754,8 @@ replicaset.apps/user03-order-7bb5bc7686     1         1         0       10m
 replicaset.apps/user03-payment-7946878fc7   1         1         1       7m4s
 ```
 
+![image](https://user-images.githubusercontent.com/88864740/135498339-545691db-5295-42a8-b85f-61326fedb02c.png)
+
 
 ## 서킷 브레이킹(Circuit Breaking)
 
