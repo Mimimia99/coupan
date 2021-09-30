@@ -367,7 +367,7 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 ```
 
 - 꽃 구독 주문 후의 MyPage
-![image](https://user-images.githubusercontent.com/88864740/135380030-692b9e88-2a56-49bf-bafd-a4c64c61470a.png)
+![image](https://user-images.githubusercontent.com/88864740/135387606-e7101b2c-a606-4848-8ca9-1db917a615be.png)
 
 - 꽃 구독 주문 취소 후의 myPage (변경된 상태 노출값 확인 가능)
 ![image](https://user-images.githubusercontent.com/88864740/135380241-ae14e75f-5090-42bd-be48-6f11bf24caf8.png)
