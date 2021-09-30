@@ -614,84 +614,115 @@ http POST http://localhost:8081/orders phoneNumber="01012345678" address="Busan"
 
 <!-- start -->
 ## Deploy / Pipeline
+### codebuild 사용
 
-- 소스 가져오기
+* codebuild를 사용하여 pipeline 생성 및 배포
+
 ```
-git clone https://github.com/quiz526/coupan.git
-```
+# (Order) buildspec.yml
 
-- 빌드하기
-```
-cd coupon
-mvn package
+version: 0.2
 
-cd customercenter
-mvn package
+env:
+  variables:
+    _PROJECT_NAME: "user03-order"
 
-cd gateway
-mvn package
+phases:
+  install:
+    commands:
+      - echo install kubectl
+      - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mv ./kubectl /usr/local/bin/kubectl
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - echo $_PROJECT_NAME
+      - echo $AWS_ACCOUNT_ID
+      - echo $AWS_DEFAULT_REGION
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo start command
+      - docker login --username AWS -p $(aws ecr get-login-password --region $AWS_DEFAULT_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - mvn package -Dmaven.test.skip=true
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION  .
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo connect kubectl
+      - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+      - kubectl config set-credentials admin --token="$KUBE_TOKEN"
+      - kubectl config set-context default --cluster=k8s --user=admin
+      - kubectl config use-context default
+      - |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: $_PROJECT_NAME
+            labels:
+              app: $_PROJECT_NAME
+          spec:
+            ports:
+              - port: 8080
+                targetPort: 8080
+            selector:
+              app: $_PROJECT_NAME
+          EOF
+      - |
+          cat  <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: $_PROJECT_NAME
+            labels:
+              app: $_PROJECT_NAME
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: $_PROJECT_NAME
+            template:
+              metadata:
+                labels:
+                  app: $_PROJECT_NAME
+              spec:
+                containers:
+                  - name: $_PROJECT_NAME
+                    image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+                    ports:
+                      - containerPort: 8080
+                    readinessProbe:
+                      httpGet:
+                        path: /actuator/health
+                        port: 8080
+                      initialDelaySeconds: 10
+                      timeoutSeconds: 2
+                      periodSeconds: 5
+                      failureThreshold: 10
+                    livenessProbe:
+                      httpGet:
+                        path: /actuator/health
+                        port: 8080
+                      initialDelaySeconds: 120
+                      timeoutSeconds: 2
+                      periodSeconds: 5
+                      failureThreshold: 5
+          EOF
+cache:
+  paths:
+    - '/root/.m2/**/*'
+``` 
 
-cd order
-mvn package
+- order 서비스 배포 
+![image](https://user-images.githubusercontent.com/88864740/135436874-a7c27984-fed1-4098-881f-3b1be3ffbd31.png)
 
-cd pay
-mvn package
-```
-↓ sample : order
-![image](https://user-images.githubusercontent.com/84000890/124414754-448b3380-dd8e-11eb-8ad7-cff7825c5b76.png)
-
-- 도커라이징(Dockerizing) : Azure Container Registry(ACR)에 Docker Image Push하기
-```
-cd coupon
-az acr build --registry user18skccacr --image user18skccacr.azurecr.io/coupon:v1 .
-
-cd customercenter
-az acr build --registry user18skccacr --image user18skccacr.azurecr.io/customercenter:v1 .
-
-cd gateway
-az acr build --registry user18skccacr --image user18skccacr.azurecr.io/gateway:v1 .
-
-cd order
-az acr build --registry user18skccacr --image user18skccacr.azurecr.io/order:v1 .
-
-cd pay
-az acr build --registry user18skccacr --image user18skccacr.azurecr.io/pay:v1 .
-```
-
-↓ 이미지 push
-
-![image](https://user-images.githubusercontent.com/84000890/124414816-608ed500-dd8e-11eb-94b5-4cd1977dfd5b.png)
-
-↓ 컨테이너레파지토리 확인
-
-![image](https://user-images.githubusercontent.com/84000890/124414833-6e445a80-dd8e-11eb-9c72-dc0e8c991213.png)
-
-
-- 컨테이너라이징(Containerizing) : Deployment 생성
-```
-kubectl create deploy coupon --image=user18skccacr.azurecr.io/coupon:v1
-kubectl create deploy customercenter --image=user18skccacr.azurecr.io/customercenter:v1
-kubectl create deploy gateway --image=user18skccacr.azurecr.io/gateway:v1
-kubectl create deploy order --image=user18skccacr.azurecr.io/order:v1
-kubectl create deploy pay --image=user18skccacr.azurecr.io/pay:v1
-
-kubectl get all
-```
-
-- 컨테이너라이징(Containerizing) : Service 생성 확인
-```
-kubectl expose deploy coupon --type="ClusterIP" --port=8080
-kubectl expose deploy customercenter --type="ClusterIP" --port=8080
-kubectl expose deploy gateway --type=LoadBalancer --port=8080
-kubectl expose deploy order --type="ClusterIP" --port=8080
-kubectl expose deploy pay --type="ClusterIP" --port=8080
-
-kubectl get all -n coupan
-```
-
-↓ 배포 
-
-![image](https://user-images.githubusercontent.com/84000890/124416053-1529f600-dd91-11eb-9e31-c200902a56f5.png)
+- order 서비스 배포 진행 단계 
+![image](https://user-images.githubusercontent.com/88864740/135437079-00847230-4155-4aa1-88b7-46a11747cd5d.png)
 
 
 
