@@ -231,6 +231,8 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, 
 
     - 적용 후 REST API 의 테스트: 꽃 구독 주문(order) 시, 결제(payment) 시스템 내  결제내역 생성되므로 order 서비스에 대한 정상 처리 여부를 확인한다.
 ```
+< local에서 구동 시>
+
 # order 서비스의 꽃 구독 주문 처리
 http POST http://localhost:8081/orders phoneNumber="01012341234" address="SEOUL" customerName="KIM" flowerType="MixBox" price=10000 
 
@@ -250,6 +252,27 @@ http GET http://localhost:8083/deliveries
 http GET http://localhost:8081/myPages
 ```
 
+```
+< aws에서 구동 시>
+
+# order 서비스의 꽃 구독 주문 처리
+http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01012341234" address="Seoul" customerName="KWON" flowerType="RoseBox" price=10000 status="Ordered" 
+
+# 주문 상태 확인
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders
+
+# 결제 상태 확인
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/payments
+
+# 주문상세 확인
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orderDetails
+
+# 배송 처리 확인
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/deliveries
+
+# MyPage 확인
+http GET http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/myPages
+```
 
 ## 폴리글랏 퍼시스턴스
 
