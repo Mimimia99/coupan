@@ -46,10 +46,10 @@
 # 분석/설계
 
 ## AS-IS 조직 (Horizontally-Aligned)
- ![image](https://user-images.githubusercontent.com/88864740/135374302-765ba22b-539e-4879-82fa-b4220061c3a4.png)
+![image](https://user-images.githubusercontent.com/88864740/135375102-36f22043-72f1-485f-8fba-983d567679c7.png)
 
 ## TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/88864740/135374656-d683729a-ecc5-4ebd-858e-9e8c26b91d4e.png)
+![image](https://user-images.githubusercontent.com/88864740/135375149-af395bc9-0b70-4aca-8598-d00c1b458853.png)
 
 
 ## Event Storming 결과
@@ -60,26 +60,27 @@
 ![ddd1](https://user-images.githubusercontent.com/88864740/135374980-7b004286-5ce0-4b5e-9184-7958be606ae8.png)
 
 ### 부적격 이벤트 탈락
-![ddd2](https://user-images.githubusercontent.com/88864740/135374765-5f2c6ce6-4860-4191-be70-ffb77728b3e4.png)
+![ddd2](https://user-images.githubusercontent.com/88864740/135375184-412a2bc2-1931-4c57-9785-2957643dbeb7.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-    - 구매이력을 조회함 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
+    - 주문내역을 조회함 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
+    - 주문수정됨/결제변경됨/배송변경됨 : 구현범위를 벗어난 이벤트로 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
-![ddd3](https://user-images.githubusercontent.com/84000890/124348179-6caa5380-dc23-11eb-88eb-0fdf5ae6fb2d.jpg)
+![ddd3](https://user-images.githubusercontent.com/88864740/135375283-41815d1b-f387-4efb-acf2-b4504c6f0db0.png)
 
 ### 어그리게잇으로 묶기
-![ddd4](https://user-images.githubusercontent.com/84000890/124348180-6f0cad80-dc23-11eb-9f66-e840ab1499e9.jpg)
+![ddd4](https://user-images.githubusercontent.com/88864740/135375307-cf47a0b5-4b44-4bc9-8b35-e686f94f0049.png)
 
-    - 쿠폰, 구매, 결제와 같이 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
+    - 주문, 결제, 배송와 같이 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
 
-![ddd5_바운드추가](https://user-images.githubusercontent.com/84000890/124348184-7338cb00-dc23-11eb-90f5-9a9881d73d93.jpg)
+![바운디드추가](https://user-images.githubusercontent.com/88864740/135375387-5f8118ce-b06c-4724-82b5-5455a9fa5d2e.png)
 
     - 도메인 서열 분리 
-        - Core Domain: 쿠폰, 구매, 결제 : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 쿠폰, 구매, 결제의 경우 1주일 1회 미만
-        - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
+    - Core Domain: 주문, 결제, 배송: 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 주문, 결제, 배송의 경우 1주일 1회 미만
+    - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기                                준으로 함.
 
 ### 폴리시 부착및 컨텍스트 매핑
 
