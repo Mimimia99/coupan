@@ -299,84 +299,78 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - myPage 구현
 
-↓ 쿠폰구매 완료 시, 데이터 생성
+↓ 꽃 구독 주문 완료 시, 데이터 생성
 ```
-  public void whenOrdered_then_CREATE_1 (@Payload Ordered ordered) {
+@StreamListener(KafkaProcessor.INPUT)
+    public void whenOrdered_then_CREATE_1(@Payload Ordered ordered) {
         try {
-
-            if (ordered.isMe()) {            
-
+            if (ordered.isMe()) {
                 // view 객체 생성
-                Mypage mypage = new Mypage();
+                MyPage myPage = new MyPage();
                 // view 객체에 이벤트의 Value 를 set 함
-                mypage.setOrderId(ordered.getId());
-                mypage.setCustomerId(ordered.getCustomerId());
-                mypage.setStatus(ordered.getStatus());
-                mypage.setQty(ordered.getQty());
-                mypage.setOrderDate(ordered.getOrderDate());
+                myPage.setOrderId(ordered.getId());
+                myPage.setFlowerType(ordered.getFlowerType());
+                myPage.setPrice(ordered.getPrice());
+                myPage.setPhoneNumber(ordered.getPhoneNumber());
+                myPage.setAddress(ordered.getAddress());
+                myPage.setCustomerName(ordered.getCustomerName());
+                myPage.setStatus(ordered.getStatus());
+
                 // view 레파지 토리에 save
-                mypageRepository.save(mypage);
+                myPageRepository.save(myPage);
             }
-
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 ```
-↓ 쿠폰결제 완료 시 또는 쿠폰구매취소 시에 상태값과 취소처리일시 등이 변경된다.
+
+↓ 주문 결제 완료 시 또는 주문 결제취소 시에 상태값 등이 변경된다.
 ```
-    @StreamListener(KafkaProcessor.INPUT)
-    public void whenPayed_then_UPDATE_1(@Payload Payed payed) {
+@StreamListener(KafkaProcessor.INPUT)
+    public void whenPaymentConfirmed_then_UPDATE_4(@Payload PaymentConfirmed paymentConfirmed) {
         try {
-            if (payed.isMe()) {
+            if (paymentConfirmed.isMe()) {
                 // view 객체 조회
-                List<Mypage> mypageList = mypageRepository.findByOrderId(payed.getOrderId());
-                for(Mypage mypage : mypageList){
+                List<MyPage> myPageList = myPageRepository.findByOrderId(paymentConfirmed.getOrderId());
+                for (MyPage myPage : myPageList) {
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
-                    mypage.setPayAmt(payed.getPayAmt());
-                    mypage.setPayDate(payed.getPayDate());
-                    mypage.setStatus(payed.getStatus());
-                    mypage.setPayCancelDate(payed.getPayCancelDate());
+                    myPage.setStatus(paymentConfirmed.getStatus());
+                    myPage.setPrice(paymentConfirmed.getPrice());
                     // view 레파지 토리에 save
-                    mypageRepository.save(mypage);
+                    myPageRepository.save(myPage);
                 }
-            }   
-
-        }catch (Exception e){
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    @StreamListener(KafkaProcessor.INPUT)
-    public void whenOrderCancelled_then_UPDATE_2(@Payload OrderCancelled orderCancelled) {
+    }  
+.....
+@StreamListener(KafkaProcessor.INPUT)
+    public void whenPaymentCancelled_then_UPDATE_5(@Payload PaymentCancelled paymentCancelled) {
         try {
-            if (orderCancelled.isMe()){
+            if (paymentCancelled.isMe()) {
                 // view 객체 조회
-                List<Mypage> mypageList = mypageRepository.findByOrderId(orderCancelled.getId());
-                for(Mypage mypage : mypageList){
+                List<MyPage> myPageList = myPageRepository.findByOrderId(paymentCancelled.getOrderId());
+                for (MyPage myPage : myPageList) {
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
-                    mypage.setOrderCancelDate(orderCancelled.getOrderCancelDate());
-                    mypage.setStatus(orderCancelled.getStatus());
+                    myPage.setStatus(paymentCancelled.getStatus());
                     // view 레파지 토리에 save
-                    mypageRepository.save(mypage);
+                    myPageRepository.save(myPage);
                 }
-            }    
-
-        }catch (Exception e){
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 ```
 
-- 쿠폰구매 후의 myPage
+- 꽃 구독 주문 후의 MyPage
+![image](https://user-images.githubusercontent.com/88864740/135380030-692b9e88-2a56-49bf-bafd-a4c64c61470a.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124408930-451dcd00-dd82-11eb-8cb6-f667c393c52e.png)
-
-- 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능)
-- 
-![image](https://user-images.githubusercontent.com/84000890/124408981-61ba0500-dd82-11eb-8ac2-82d682e03306.png)
-
-
+- 꽃 구독 주문 취소 후의 myPage (변경된 상태 노출값 확인 가능)
+![image](https://user-images.githubusercontent.com/88864740/135380241-ae14e75f-5090-42bd-be48-6f11bf24caf8.png)
 
 
 ## 동기식 호출(Req/Resp)
