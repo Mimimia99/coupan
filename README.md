@@ -70,43 +70,44 @@
 ![ddd3](https://user-images.githubusercontent.com/88864740/135375283-41815d1b-f387-4efb-acf2-b4504c6f0db0.png)
 
 ### 어그리게잇으로 묶기
-![ddd4](https://user-images.githubusercontent.com/88864740/135375486-ffb82bd9-8994-4b59-ae79-2d2d9c9d146a.png)
+![ddd4](https://user-images.githubusercontent.com/88864740/135375596-beaf91f7-2265-46a3-9757-a6eece02f926.png)
 
     - 주문, 결제, 배송와 같이 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
-![ddd5](https://user-images.githubusercontent.com/88864740/135375518-d8d3fa2d-6b88-40df-bda5-47a6e4d6f7b0.png)
+![ddd5](https://user-images.githubusercontent.com/88864740/135375629-71cd78a7-7049-4ea7-ad57-44989f222187.png)
 
     - 도메인 서열 분리 
     - Core Domain: 주문, 결제, 배송: 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 주문, 결제, 배송의 경우 1주일 1회 미만
     - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기                                준으로 함.
 
 ### 폴리시 부착및 컨텍스트 매핑
+![ddd6](https://user-images.githubusercontent.com/88864740/135375659-340778e5-86f2-43ab-b1ce-ac66c3a6092f.png)
 
-![ddd6](https://user-images.githubusercontent.com/84000890/124348188-7764e880-dc23-11eb-876e-0d187d4a7ead.jpg)
 ↓ View Model 추가
-![ddd7_고객센터추가](https://user-images.githubusercontent.com/84000890/124348191-7b910600-dc23-11eb-92ec-3843190a626b.jpg)
-
+![ddd7](https://user-images.githubusercontent.com/88864740/135375697-153ee5a1-6a17-42c2-b916-8ee0f16bbdc0.png)
 
 ### 완성된 1차 모형(영문으로 변경)
 
-![ddd최종](https://user-images.githubusercontent.com/84000890/124348194-8055ba00-dc23-11eb-99e9-7419fea37ba7.jpg)
+![ddd8](https://user-images.githubusercontent.com/88864740/135375785-7aa3efac-d80e-4775-a9f5-5560df71b074.png)
   
 
 ### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
 
-![ddd점검1](https://user-images.githubusercontent.com/84000890/124348200-8481d780-dc23-11eb-899a-0b14361429a1.jpg)
+![ddd9](https://user-images.githubusercontent.com/88864740/135375901-e3c9d104-91b1-4774-ac44-77eb7067e973.png)
 
-    - 고객이 쿠폰을 구매한다 (ok)
+    - 고객이 꽃 구독 상품을 구매한다 (ok)
     - 구매가 완료되면 결제가 진행된다 (ok)
-    - 구매 내역이 결제정보에 전달되는 동시에, 쿠폰 재고 수량이 변경된다. (ok)
-    - 결제는 구매내역(구매수량*금액)통해 결제가 진행된다. (ok)
-    - 결제가 완료되면, 결제완료상태(PayCompleted)로 변경된다. (ok)
+    - 결제는 구매내역을 통해 결제가 진행된다. (ok)
+    - 결제가 완료되면, 결제완료상태(PaymentConfirmed)로 변경된다. (ok)
+    - 꽃구독 주문이 되면 주문내역을 KUKKA 상점으로 전달한다(ok)
+    - Kukka 상점에서 꽃 구독 배송 출발한다(ok)
 
-![ddd점검2](https://user-images.githubusercontent.com/84000890/124348202-86e43180-dc23-11eb-997e-a357528acb8f.jpg)
+![ddd10](https://user-images.githubusercontent.com/88864740/135375970-6b0e55eb-cc63-4320-90ed-8424d4fa8dc8.png)
 
-    - 고객이 쿠폰 구매를 취소할 수 있다 (ok)
-    - 고객이 쿠폰 구매를 취소하면 쿠폰 재고 수량이 변경된다. (ok)
+    - 고객이 꽃 구독 구매를 취소할 수 있다 (ok)
+    - 고객이 꽃 구독 구매를 취소하면 결제가 취소된다. (ok)
+    - 결제가 취소되면 꽃 배송을 취소한다. (ok)
     - 고객은 구매 상태와 결제 상태 등을 중간중간 조회한다. (View-green sticker 의 추가로 ok) 
 
 
