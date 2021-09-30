@@ -835,8 +835,9 @@ kubectl get hpa -n auto
 
 - CB 에서 했던 방식대로 워크로드를 30초 동안 걸어준다.
 ```
-$ siege -c100 -t30S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"15000", "status":"ordered"}'
+siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"AAAA","price":10000}'
 ```
+↓변경필요!!
 ![image](https://user-images.githubusercontent.com/84000890/124470087-1f221800-ddd6-11eb-8c64-b5bf81681a01.png)
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
