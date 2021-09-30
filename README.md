@@ -70,13 +70,12 @@
 ![ddd3](https://user-images.githubusercontent.com/88864740/135375283-41815d1b-f387-4efb-acf2-b4504c6f0db0.png)
 
 ### 어그리게잇으로 묶기
-![ddd4](https://user-images.githubusercontent.com/88864740/135375307-cf47a0b5-4b44-4bc9-8b35-e686f94f0049.png)
+![ddd4](https://user-images.githubusercontent.com/88864740/135375486-ffb82bd9-8994-4b59-ae79-2d2d9c9d146a.png)
 
     - 주문, 결제, 배송와 같이 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
-
-![바운디드추가](https://user-images.githubusercontent.com/88864740/135375387-5f8118ce-b06c-4724-82b5-5455a9fa5d2e.png)
+![ddd5](https://user-images.githubusercontent.com/88864740/135375518-d8d3fa2d-6b88-40df-bda5-47a6e4d6f7b0.png)
 
     - 도메인 서열 분리 
     - Core Domain: 주문, 결제, 배송: 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 주문, 결제, 배송의 경우 1주일 1회 미만
