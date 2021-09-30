@@ -1,4 +1,4 @@
-# 꽃 구독 주문 사이트[KUKKA]
+# 꽃 구독 주문 사이트[kukka]
 
 ![image](https://user-images.githubusercontent.com/88864740/135373766-391c1869-bee0-40d9-9b31-8cbe9e0593ce.png)
 
