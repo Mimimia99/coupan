@@ -113,17 +113,18 @@
 
 ### 비기능 요구사항에 대한 검증
 
-![ddd점검3](https://user-images.githubusercontent.com/84000890/124348204-89468b80-dc23-11eb-83e6-4cbac11247fb.jpg)
+![ddd11](https://user-images.githubusercontent.com/88864740/135376139-7eb6841f-a39a-4d63-b535-7e3f40291164.png)
 
-    - ① : 구매가 완료되면 쿠폰의 구매 가능한 수량이 변경되어야 한다. (Req/Res)
-    - ② : 결제 시스템이 정상 수행되지 않더라도 쿠폰구매는 365일 24시간 받을 수 있어야 한다. (Pub/sub)
-    - ③ : 쿠폰 구매 시스템이 과중되면 잠시동안 구매를 받지 않고 잠시후에 진행하도록 유도한다 (Circuit breaker)
-    - ④ : 고객이 쿠폰구매정보를 별도의 고객페이지에서 확인할 수 있어야 한다 (CQRS)
+    - ① : 주문이 완료되면 결제 시스템에서 결제가 진행되어야 한다. (Req/Res)
+    - ② : 결제 시스템이 정상 수행되지 않더라도 배송은 365일 24시간 받을 수 있어야 한다. (Pub/sub)
+    - ③ : 꽃 구독 주문 시스템이 과중되면 잠시동안 구매를 받지 않고 잠시후에 진행하도록 유도한다 (Circuit breaker)
+    - ④ : 고객이 꽃 구독 주문정보를 별도의 고객페이지에서 확인할 수 있어야 한다 (CQRS)
+          꽃가게 주인이 고객의 주문정보를 별도의 관리자 페이지에서 확인할 수 있어야 한다 (CQRS)     
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/84000890/124407730-98425080-dd7f-11eb-9716-9b8ad6dd61fa.png)
+![image](https://user-images.githubusercontent.com/88864740/135376202-c4b8b317-c098-458d-8895-5f25c1a9ca85.png)
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
     - 호출관계에서 PubSub 과 Req/Resp 를 구분함
