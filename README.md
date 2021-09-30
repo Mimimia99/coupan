@@ -454,34 +454,33 @@ public interface PaymentService {
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템(payment)이 장애가 나면 예약도 못하는 것을 확인
 
-결제 서비스(payment)를 잠시 내려놓음 (ctrl+c) :8082 포트 확인 안됨
-![image](https://user-images.githubusercontent.com/88864740/135383901-e3e1a21a-b48f-4971-bfb9-eeea097082b0.png)
+결제 서비스(payment)를 잠시 내려놓음
+![image](https://user-images.githubusercontent.com/88864740/135502643-6542006f-8295-4de3-8c72-f77def449a29.png)
 
-↓쿠폰구매하기(order)
+
+↓ 꽃구독 주문하기(order)
 ```
-http POST http://localhost:8081/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000 status="Ordered"
+http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000  status="Ordered"
 ```
 < Fail >
-↓ 쿠폰구매 시 500 error 발생
-![image](https://user-images.githubusercontent.com/88864740/135383961-be910279-e350-4437-8ca1-f12155698283.png)
+↓ 꽃 구독 주문 시 500 error 발생
+![image](https://user-images.githubusercontent.com/88864740/135502812-924919b4-a8e7-41ca-94ec-e2d2ea926451.png)
 
 - 결제(payment) 서비스 재기동
-```
-cd payment
-mvn spring-boot:run
-```
+![image](https://user-images.githubusercontent.com/88864740/135502993-fb76c473-f5a7-4265-81f3-3caadcffc900.png)
 
 - 꽃 구독 주문하기(order)
 ```
-http POST http://localhost:8081/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000 status="Ordered"
+http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000  status="Ordered"
 ```
 < Success >
-![image](https://user-images.githubusercontent.com/88864740/135384366-0240fb28-b4dc-4213-bac8-4f8f0fc23bd1.png)
+![image](https://user-images.githubusercontent.com/88864740/135503087-ef071d00-7d33-460d-9f4f-d849856e2127.png)
+
 
 - 결제완료가 생성되었는지 확인을 통해 정상 req/res 처리 여부 확인
 
 ↓ payment 에 결제완료 정보 생성
-![image](https://user-images.githubusercontent.com/88864740/135384483-f1c63fbf-49f5-46bd-aa1a-706652343c17.png)
+![image](https://user-images.githubusercontent.com/88864740/135503580-1bdf9b66-13b1-4b4a-857a-ff1c6a9b5191.png)
 
 
 ## Gateway 적용
@@ -557,7 +556,7 @@ server:
   port: 8080
 ```
 
-- gateway 테스트
+- gateway 테스트(로컬)
 
 ```
 http POST http://localhost:8088/orders phoneNumber="01055556666" address="Jeju" customerName="Han" flowerType="DaisyBox" price=30000  status="Ordered"
@@ -565,6 +564,16 @@ http POST http://localhost:8088/orders phoneNumber="01055556666" address="Jeju" 
 
 ↓ gateway 8088포트로 쿠폰 등록 처리 시,  8081 포트로 링크되어 정상 처리
 ![image](https://user-images.githubusercontent.com/88864740/135384854-c2cdee92-00d2-4112-be68-7cb35b723833.png)
+
+
+- gateway 테스트(aws)
+
+```
+http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000  status="Ordered"
+```
+
+↓ gateway 8088포트로 쿠폰 등록 처리 시,  http://order:8080/ 으로 링크되어 정상 처리
+![image](https://user-images.githubusercontent.com/88864740/135503933-6be603f0-51bb-4011-858a-e96852767b43.png)
 
 
 
