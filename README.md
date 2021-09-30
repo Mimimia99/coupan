@@ -612,8 +612,9 @@ http POST http://localhost:8081/orders phoneNumber="01012345678" address="Busan"
 ↓ delivery 와 연동되지 않아 myPage에서 확인 시, delivery 시스템의 처리 영역은 확인되지 않는다. ex) deliveryStatus
 ![image](https://user-images.githubusercontent.com/88864740/135387132-0a9042f7-e4c4-46c8-87cc-134a99bf44fc.png)
 
-<!-- start -->
+
 ## Deploy / Pipeline
+
 ### codebuild 사용
 
 * codebuild를 사용하여 pipeline 생성 및 배포
@@ -724,6 +725,34 @@ cache:
 - order 서비스 배포 진행 단계 
 ![image](https://user-images.githubusercontent.com/88864740/135437079-00847230-4155-4aa1-88b7-46a11747cd5d.png)
 
+- 서비스 배포 상태
+```
+root@labs-2113569968:/home/project/kukka# kubectl get all
+NAME                                  READY   STATUS             RESTARTS   AGE
+pod/user03-delivery-bdbfc7b7-kck7s    1/1     Running            0          81m
+pod/user03-gateway-8c9687465-8wj8s    1/1     Running            0          75m
+pod/user03-order-7b564cb4b6-8zczp     1/1     Running   	 1          85m
+pod/user03-payment-58ff85f67b-xblx6   1/1     Running            0          106m
+
+NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes        ClusterIP   10.100.0.1       <none>        443/TCP    9h
+service/user03-delivery   ClusterIP   10.100.119.58    <none>        8080/TCP   81m
+service/user03-gateway    ClusterIP   10.100.3.65      <none>        8080/TCP   75m
+service/user03-order      ClusterIP   10.100.64.206    <none>        8080/TCP   85m
+service/user03-payment    ClusterIP   10.100.114.229   <none>        8080/TCP   106m
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/user03-delivery   1/1     1            1           81m
+deployment.apps/user03-gateway    1/1     1            1           75m
+deployment.apps/user03-order      1/1     1            1           85m
+deployment.apps/user03-payment    1/1     1            1           106m
+
+NAME                                        DESIRED   CURRENT   READY   AGE
+replicaset.apps/user03-delivery-bdbfc7b7    1         1         1       81m
+replicaset.apps/user03-gateway-8c9687465    1         1         1       75m
+replicaset.apps/user03-order-7b564cb4b6     1         1         1       85m
+replicaset.apps/user03-payment-58ff85f67b   1         1         1       106m
+```
 
 
 ## 서킷 브레이킹(Circuit Breaking)
