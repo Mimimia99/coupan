@@ -19,12 +19,14 @@
 
 비기능적 요구사항
 1. 트랜잭션
-    i. 결제가 되지 않은 주문건은 아예 거래가 성립되지 않아야 한다  Sync 호출
+    i. 결제가 되지 않은 주문건은 아예 거래가 성립되지 않아야 한다 → Sync 호출
+    
 2. 장애격리
     i. 배송기능이 수행되지 않더라도 주문은 365일 24시간 받을 수 있어야 한다 → Async (event-driven), Eventual Consistency
-    ii. 결제시스템이 과중되면 사용자를 잠시동안 받지 않고 결제를 잠시후에 하도록 유도한다  Circuit breaker, fallback
+    ii. 결제시스템이 과중되면 사용자를 잠시동안 받지 않고 결제를 잠시후에 하도록 유도한다 → Circuit breaker, fallback
+    
 3. 성능
-    1. 고객이 자주 상점관리에서 확인할 수 있는 배달상태를 주문시스템(프론트엔드)에서 확인할 수 있어야 한다 → CQRS
+    i. 고객이 자주 상점관리에서 확인할 수 있는 배달상태를 주문시스템(프론트엔드)에서 확인할 수 있어야 한다 → CQRS
 
 
 # 체크포인트
@@ -49,18 +51,17 @@
  ![image](https://user-images.githubusercontent.com/88864740/135374302-765ba22b-539e-4879-82fa-b4220061c3a4.png)
 
 ## TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/84000863/121344166-65fb2a00-c95e-11eb-97b3-8d1490beb909.png)
+  ![image](https://user-images.githubusercontent.com/88864740/135374656-d683729a-ecc5-4ebd-858e-9e8c26b91d4e.png)
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/2g5SbEbUqzXH8UjIkG1viaXlcoq2/mine/b90af39ae23bc6868258e50d1882d9e7
-
+* MSAEz 로 모델링한 이벤트스토밍 결과:  https://www.msaez.io/#/storming/XUPd3rsARfQbeKeRRQgZyiBCKkf2/f4cdc076d7df427ec32a60cb30cb3f76
 
 ### 이벤트 도출
-![ddd1](https://user-images.githubusercontent.com/84000890/124348168-5f8d6480-dc23-11eb-8e4f-f04f4e8f907a.jpg)
+![ddd1](https://user-images.githubusercontent.com/88864740/135374734-dad1c397-8202-4b5f-9062-86304becfc8a.png)
 
 ### 부적격 이벤트 탈락
-![ddd2](https://user-images.githubusercontent.com/84000890/124348178-6a47f980-dc23-11eb-9982-3978d8dfcd67.jpg)
+![ddd2](https://user-images.githubusercontent.com/88864740/135374765-5f2c6ce6-4860-4191-be70-ffb77728b3e4.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
     - 구매이력을 조회함 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
