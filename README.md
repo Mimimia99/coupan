@@ -726,33 +726,7 @@ cache:
 ![image](https://user-images.githubusercontent.com/88864740/135437079-00847230-4155-4aa1-88b7-46a11747cd5d.png)
 
 - 서비스 배포 상태
-```
-root@labs-2113569968:/home/project/kukka# kubectl get all
-NAME                                  READY   STATUS             RESTARTS   AGE
-pod/gateway-767945fdb7-6kdr5          1/1     Running            0          67s
-pod/user03-delivery-bdbfc7b7-kck7s    1/1     Running            0          106m
-pod/user03-order-7bb5bc7686-2rnsk     1/1     Running		 6          10m
-pod/user03-payment-7946878fc7-b8wj5   1/1     Running            0          7m4s
-
-NAME                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                                    PORT(S)          AGE
-service/gateway           LoadBalancer   10.100.205.43    ac692c70cf5884a51b06ddb9b632535d-1677443393.ap-northeast-2.elb.amazonaws.com   8080:30875/TCP   3s
-service/kubernetes        ClusterIP      10.100.0.1       <none>                                                                         443/TCP          10h
-service/user03-delivery   ClusterIP      10.100.119.58    <none>                                                                         8080/TCP         106m
-service/user03-order      ClusterIP      10.100.64.206    <none>                                                                         8080/TCP         109m
-service/user03-payment    ClusterIP      10.100.114.229   <none>                                                                         8080/TCP         130m
-
-NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/gateway           1/1     1            1           67s
-deployment.apps/user03-delivery   1/1     1            1           106m
-deployment.apps/user03-order      0/1     1            0           109m
-deployment.apps/user03-payment    1/1     1            1           130m
-
-NAME                                        DESIRED   CURRENT   READY   AGE
-replicaset.apps/gateway-767945fdb7          1         1         1       67s
-replicaset.apps/user03-delivery-bdbfc7b7    1         1         1       106m
-replicaset.apps/user03-order-7bb5bc7686     1         1         0       10m
-replicaset.apps/user03-payment-7946878fc7   1         1         1       7m4s
-```
+![image](https://user-images.githubusercontent.com/88864740/135499446-51cac160-aec2-4fe8-9011-a67a13c5f54a.png)
 
 ![image](https://user-images.githubusercontent.com/88864740/135498339-545691db-5295-42a8-b85f-61326fedb02c.png)
 
