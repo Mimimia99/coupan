@@ -729,41 +729,41 @@ cache:
 ```
 root@labs-2113569968:/home/project/kukka# kubectl get all
 NAME                                  READY   STATUS             RESTARTS   AGE
-pod/user03-delivery-bdbfc7b7-kck7s    1/1     Running            0          81m
-pod/user03-gateway-8c9687465-8wj8s    1/1     Running            0          75m
-pod/user03-order-7b564cb4b6-8zczp     1/1     Running   	 1          85m
-pod/user03-payment-58ff85f67b-xblx6   1/1     Running            0          106m
+pod/gateway-767945fdb7-6kdr5          1/1     Running            0          67s
+pod/user03-delivery-bdbfc7b7-kck7s    1/1     Running            0          106m
+pod/user03-order-7bb5bc7686-2rnsk     1/1     Running		 6          10m
+pod/user03-payment-7946878fc7-b8wj5   1/1     Running            0          7m4s
 
-NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-service/kubernetes        ClusterIP   10.100.0.1       <none>        443/TCP    9h
-service/user03-delivery   ClusterIP   10.100.119.58    <none>        8080/TCP   81m
-service/user03-gateway    ClusterIP   10.100.3.65      <none>        8080/TCP   75m
-service/user03-order      ClusterIP   10.100.64.206    <none>        8080/TCP   85m
-service/user03-payment    ClusterIP   10.100.114.229   <none>        8080/TCP   106m
+NAME                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                                    PORT(S)          AGE
+service/gateway           LoadBalancer   10.100.205.43    ac692c70cf5884a51b06ddb9b632535d-1677443393.ap-northeast-2.elb.amazonaws.com   8080:30875/TCP   3s
+service/kubernetes        ClusterIP      10.100.0.1       <none>                                                                         443/TCP          10h
+service/user03-delivery   ClusterIP      10.100.119.58    <none>                                                                         8080/TCP         106m
+service/user03-order      ClusterIP      10.100.64.206    <none>                                                                         8080/TCP         109m
+service/user03-payment    ClusterIP      10.100.114.229   <none>                                                                         8080/TCP         130m
 
 NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/user03-delivery   1/1     1            1           81m
-deployment.apps/user03-gateway    1/1     1            1           75m
-deployment.apps/user03-order      1/1     1            1           85m
-deployment.apps/user03-payment    1/1     1            1           106m
+deployment.apps/gateway           1/1     1            1           67s
+deployment.apps/user03-delivery   1/1     1            1           106m
+deployment.apps/user03-order      0/1     1            0           109m
+deployment.apps/user03-payment    1/1     1            1           130m
 
 NAME                                        DESIRED   CURRENT   READY   AGE
-replicaset.apps/user03-delivery-bdbfc7b7    1         1         1       81m
-replicaset.apps/user03-gateway-8c9687465    1         1         1       75m
-replicaset.apps/user03-order-7b564cb4b6     1         1         1       85m
-replicaset.apps/user03-payment-58ff85f67b   1         1         1       106m
+replicaset.apps/gateway-767945fdb7          1         1         1       67s
+replicaset.apps/user03-delivery-bdbfc7b7    1         1         1       106m
+replicaset.apps/user03-order-7bb5bc7686     1         1         0       10m
+replicaset.apps/user03-payment-7946878fc7   1         1         1       7m4s
 ```
 
 
 ## 서킷 브레이킹(Circuit Breaking)
 
 * 서킷 브레이킹 프레임워크의 선택 :  Spring FeignClient + Hystrix 사용하여 Circuit breaking 구현함
-- 시나리오 : 쿠폰 구매 시, order → coupon 에서 req/res 로 구현되어 있어, 구매가 과도한 요청으로 지연이 발생하는 경우 CirCuit Breaker 통해 장애격리한다.
+- 시나리오 : 쿠폰 구매 시, order → payment 에서 req/res 로 구현되어 있어, 주문이 과도한 요청으로 지연이 발생하는 경우 CirCuit Breaker 통해 장애격리한다.
 
 - Hystrix 설정: : 요청처리 시간이 300 밀리세컨이 초과할 경우 Circuit breaker 가 동작하여 처리하도록 적용
-- 피호출되는 coupon 서비스에 sleep을 설정해 타임아웃 시간에 걸리도록 설정한다.
+- 피호출되는 payment 서비스에 sleep을 설정해 타임아웃 시간에 걸리도록 설정한다.
 
-- order 서비스 > application.yaml
+- order 서비스 > application.yml
 ```
 feign:
   hystrix:
@@ -776,20 +776,22 @@ hystrix:
 
 ```
 
-- coupon 서비스 로직에 sleep 추가 
+- payment 서비스 로직에 sleep 추가 
 ```
-    @PreUpdate
-    public void onPreUpdate(){
-        StockModified stockModified = new StockModified();
-        BeanUtils.copyProperties(this, stockModified);
-        stockModified.publishAfterCommit();
+    @PostPersist
+    public void onPostPersist() {
 
-        try {
-            Thread.currentThread().sleep((long) (200 + Math.random() * 110));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        if (this.getStatus().equals("Ordered")) {
+            PaymentConfirmed paymentConfirmed = new PaymentConfirmed();
+            BeanUtils.copyProperties(this, paymentConfirmed);
+            paymentConfirmed.setStatus("PaymentConfirmed");
+            paymentConfirmed.publishAfterCommit();
+            
+            try {
+                Thread.currentThread().sleep((long) (200 + Math.random() * 110));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 ```
 
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
