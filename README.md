@@ -808,68 +808,52 @@ hystrix:
 ```
 
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
-- 동시사용자 50명
-- 20초 동안 실시
-- 반복횟수 10번
+- 동시사용자 200명
+- 10초 동안 실시
 
 ```
-siege -c50 -t20S -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"BBBB","price":20000}'
+siege -c200 -t10S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"AAAAA","price":30000}'
 ```
 
-![image](https://user-images.githubusercontent.com/84000890/124469554-783d7c00-ddd5-11eb-9c85-72e1ef9a3730.png)
-
-앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며
-밀린 부하가 처리되면서 다시 요청을 받기 시작함
-
+앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며 밀린 부하가 처리되면서 다시 요청을 받기 시작함
 - Availability 가 높아진 것을 확인 (siege) 
-![image](https://user-images.githubusercontent.com/88864740/135549169-f815ba5f-807a-4f2e-b0ca-f36d75a7fe3b.png)
+
+![image](https://user-images.githubusercontent.com/88864740/135552907-0277617d-bd3b-4b49-a6ef-ff292e0af059.png)
 
 ↓ 실패/성공 건을 보통 대략 0.2초 이상 수행 시 풀렸다가 다시 CB 동작이 것으로 확인됨
-![image](https://user-images.githubusercontent.com/88864740/135549145-6179c251-9200-400f-b758-fad7acc6e887.png)
-
+![image](https://user-images.githubusercontent.com/88864740/135552779-1c8f68e1-4f81-412b-9f56-813414289855.png)
 
 
 ### Autoscale (HPA)
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 - 진행 전 기본 배포 상태
+![image](https://user-images.githubusercontent.com/88864740/135553168-f9bf7d1f-9663-45f2-ae87-c227c4fa8443.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124469846-d79b8c00-ddd5-11eb-8f6d-80d1d7e3cfd3.png)
-
-
-- 쿠폰 구매(order) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 꽃 구독 주문(order) 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15 -n auto
+kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 
-kubectl get hpa -n auto
+kubectl get hpa
 ```
-![image](https://user-images.githubusercontent.com/84000890/124470021-04e83a00-ddd6-11eb-8efa-37bc3fae8451.png)
+![image](https://user-images.githubusercontent.com/88864740/135553310-40e2de7c-9a17-461e-85ea-c32cf28ca112.png)
 
-
-- CB 에서 했던 방식대로 워크로드를 30초 동안 걸어준다.
+- CB 에서 했던 방식대로 워크로드를 10초 동안 걸어준다.
 ```
-siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"AAAA","price":10000}'
+siege -c200 -t10S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"BBBBB","price":20000}'
 ```
-↓변경필요!!
-![image](https://user-images.githubusercontent.com/84000890/124470087-1f221800-ddd6-11eb-8c64-b5bf81681a01.png)
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
 watch -n 1 kubectl get pod
 ```
 
-
-
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다
-
-![image](https://user-images.githubusercontent.com/84000890/124470193-45e04e80-ddd6-11eb-85e9-aab2d4516142.png)
-
-
+![image](https://user-images.githubusercontent.com/88864740/135553541-2d05d1d3-ea27-4a09-9d0c-b5709766b671.png)
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
-  (동일 워크로드 CB 대비 3.83% -> 50.6% 성공률 향상)
-
-![image](https://user-images.githubusercontent.com/84000890/124470165-3d881380-ddd6-11eb-9e76-f1107492f7cc.png)
+  (동일 워크로드 CB 대비 82.08% -> 98.10% 성공률 향상)
+  ![image](https://user-images.githubusercontent.com/88864740/135553595-f37d89df-d7e7-4124-9fee-7c83caf5d331.png)
 
 
 
