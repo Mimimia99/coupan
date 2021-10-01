@@ -822,12 +822,10 @@ siege -c50 -t20S -r10 -v --content-type "application/json" 'http://order:8080/or
 밀린 부하가 처리되면서 다시 요청을 받기 시작함
 
 - Availability 가 높아진 것을 확인 (siege) 
-↓변경필요!!
 ![image](https://user-images.githubusercontent.com/88864740/135549169-f815ba5f-807a-4f2e-b0ca-f36d75a7fe3b.png)
 
 ↓ 실패/성공 건을 보통 대략 0.2초 이상 수행 시 풀렸다가 다시 CB 동작이 것으로 확인됨
 ![image](https://user-images.githubusercontent.com/88864740/135549145-6179c251-9200-400f-b758-fad7acc6e887.png)
-
 
 
 
