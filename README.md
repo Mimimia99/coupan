@@ -957,3 +957,37 @@ api:
 
 - order > PaymentService.java 에서 feignClient 호출 시 configMap 설정 데이터 가져오도록 아래 항목 추가
 
+```
+package kukka.external;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.Date;
+
+//@FeignClient(name="payment", url="${api.url.payment}")
+public interface PaymentService {
+
+    @RequestMapping(method = RequestMethod.GET, path = "/payments")
+    public void payment(@RequestBody Payment payment);
+
+}
+```
+
+- configMap 생성 및 조회
+```
+kubectl create configmap apiurl --from-literal=url=http://payment:8080
+kubectl get configmap apiurl -o yaml
+```
+
+![image](https://user-images.githubusercontent.com/88864740/135572938-45829ab2-3be5-4972-98c5-52424caa16b8.png)
+
+- ConfigMap 설정 정상여부 확인
+
+↓ 쿠폰 구매 정상 처리
+
+
+
