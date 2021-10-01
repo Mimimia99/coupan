@@ -893,84 +893,6 @@ kubectl apply -f kubernetes/deployment.yml
 ![image](https://user-images.githubusercontent.com/88864740/135561962-ec670df6-5e59-4786-8381-8afdc80d3802.png)
 
 
-## ConfigMap
-- req/res 호출 시 피호출되는 경로에 대해서 환경변수로 받아 처리하도록 ConfigMap적용
-- order 서비스의 deployment.yml 파일에 아래 항목 추가
-```
-          env:
-            - name: configurl			
-              valueFrom:
-                configMapKeyRef:
-                  name: apiurl
-                  key: url 
-```
-- order 서비스의 application.yml 파일 설정 : local 과 cloud 다른 값으로 처리하도록 설정
-```
-spring:
-  profiles: default
-  
-  ....
-  
-api:
-  url:
-    coupon: http://localhost:8081   
----
-spring:
-  profiles: docker
-  
-  ....
-  
-api:
-  url:
-    coupon: ${configurl}  
-```
-
-- order > CouponService.java 에서 feignClient 호출 시 configMap 설정 데이터 가져오도록 아래 항목 추가
-
-```
-package coupan.external;
-
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.Date;
-
-//@FeignClient(name="coupon", url="http://localhost:8081")
-//@FeignClient(name="coupon", url="http://coupon:8080")
-@FeignClient(name="coupon", url="${api.url.coupon}")
-
-public interface CouponService {
-    @RequestMapping(method= RequestMethod.GET, path="/chkAndModifyStock")
-    public boolean modifyStock(@RequestParam("couponId") Long couponId,
-                            @RequestParam("qty") Integer qty);
-
-}
-```
-
-- ConfigMap 생성 및 조회
-
-```
-kubectl create configmap apiurl --from-literal=url=http://coupon:8080
-kubectl get configmap apiurl -o yaml
-```
-
-![image](https://user-images.githubusercontent.com/84000890/124415681-51a92200-dd90-11eb-91bd-cd1c57565b7f.png)
-
-
-- ConfigMap 설정 정상 여부 확인 : req/res 처리 정상 여부 확인
-
-↓ 쿠폰 구매 정상 처리
-
-![image](https://user-images.githubusercontent.com/84000890/124415826-992fae00-dd90-11eb-8700-5a66c7cd8663.png)
-
-↓ 수량도 정상 변경 처리
-
-![image](https://user-images.githubusercontent.com/84000890/124415831-9f258f00-dd90-11eb-8a7f-b4d09715396e.png)
-
-
 
 ## Self-Healing (Liveness Probe)
 
@@ -996,3 +918,22 @@ kubectl get configmap apiurl -o yaml
 
 - order 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
 ![image](https://user-images.githubusercontent.com/88864740/135566300-5d9d2c68-1516-41e2-8beb-c83b81423f4a.png)
+
+
+## ConfigMap
+- req/res 호출 시 피호출되는 경로에 대해서 환경변수로 받아 처리하도록 ConfigMap적용
+
+- configmap 생성
+![image](https://user-images.githubusercontent.com/88864740/135569181-1157c490-c46c-4448-a4ab-887b6108af57.png)
+
+- order 서비스의 deployment.yml 파일에 아래 항목 추가
+```
+          envFrom:
+            - configMapRef:
+                name: log-level-configmap
+```
+↓ configmap 적용
+![image](https://user-images.githubusercontent.com/88864740/135568676-17634da7-4b01-47e7-a416-987b69364de8.png)
+
+
+
