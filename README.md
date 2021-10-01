@@ -849,7 +849,7 @@ watch -n 1 kubectl get pod
 ```
 
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다
-![image](https://user-images.githubusercontent.com/88864740/135553541-2d05d1d3-ea27-4a09-9d0c-b5709766b671.png)
+![image](https://user-images.githubusercontent.com/88864740/135554659-f69c5aa3-a899-422e-8f45-fc9e3609b81f.png)
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
   (동일 워크로드 CB 대비 82.08% -> 98.10% 성공률 향상)
@@ -863,18 +863,22 @@ watch -n 1 kubectl get pod
 
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-$ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
+siege -c250 -t100S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"CCCCC","price":20000}'
 ```
-- Readiness가 설정되지 않은 yml 파일로 배포 중 버전3에서 버전4로 업그레이드 시 서비스 요청 처리 실패
+- Readiness가 설정되지 않은 yml 파일로 배포
+
 ```
-kubectl set image deploy order order=user18skccacr.azurecr.io/order:v4 -n read
+kubectl apply -f kubernetes/deployment.yml
 ```
 
-↓ 버전 업그레이드 시작과 동시에 에러 발생
+↓seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 
-![image](https://user-images.githubusercontent.com/84000890/124468725-71fad000-ddd4-11eb-984d-7e7ca77c3dc7.png)
+![image](https://user-images.githubusercontent.com/88864740/135558769-dd2dba8d-31d2-4dff-ab2e-e428f0c6b480.png)
 
-- deployment.yml에 readiness 옵션을 추가
+- 배포기간중 Availability 가 평소 100%에서 80% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 
+ 이를 막기위해 Readiness Probe 를 설정함:
+
+- deployment.yml 에 readiness 옵션을 추가
 ```
  readinessProbe:
    tcpSocket:
@@ -884,20 +888,10 @@ kubectl set image deploy order order=user18skccacr.azurecr.io/order:v4 -n read
    periodSeconds: 5
    failureThreshold: 5          
 ```
+- 동일한 시나리오로 재배포 한 후 Availability 확인
+  : readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
-↓ 버전은 다시 한번 버전 3 상태로 맞춤
-![image](https://user-images.githubusercontent.com/84000890/124468939-b25a4e00-ddd4-11eb-94c8-f50f3c1a6212.png)
-
-
-- 동일하게 seige 로 배포작업 직전에 워크로드를 모니터링 함.
-```
-$ siege -c10 -t60S -v --content-type "application/json" -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"couponId":"1", "customerId":"2", "qty":"1", "amt":"30000", "status":"ordered"}'
-```
-
-- readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
-![image](https://user-images.githubusercontent.com/84000890/124469148-f51c2600-ddd4-11eb-82cd-680953c23dd3.png)
-
+![image](https://user-images.githubusercontent.com/88864740/135561781-361a2ea7-c867-4e40-8df8-6f688ac9e394.png)
 
 
 ## ConfigMap
@@ -981,20 +975,18 @@ kubectl get configmap apiurl -o yaml
 
 ## Self-Healing (Liveness Probe)
 
-- 구매(order) 서비스의 deployment.yaml에 liveness probe 옵션 추가 
-- 5초 간격으로 /tmp/healthy 에 접근해도록 강제 설정
+- 꽃 구독 주문(order) 서비스의 deployment.yml에 liveness probe 옵션 추가 
+- 실패를 확인하기 위해서 포트를 8081로 임의 변경함
+
 ```
-            args:
-            - /bin/sh
-            - -c
-            - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
-            livenessProbe:
-              exec:
-                command:
-                - cat
-                - /tmp/healthy
-              initialDelaySeconds: 5
-              periodSeconds: 5 
+                    livenessProbe:
+                      httpGet:
+                        path: /actuator/health
+                        port: 8081
+                      initialDelaySeconds: 120
+                      timeoutSeconds: 2
+                      periodSeconds: 5
+                      failureThreshold: 5
 ```
 
 ![image](https://user-images.githubusercontent.com/84000890/124466540-b46edd80-ddd1-11eb-9a60-2628073de341.png)
