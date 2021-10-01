@@ -933,6 +933,7 @@ kubectl apply -f kubernetes/deployment.yml
                 name: log-level-configmap
 ```
 ↓ configmap 적용
+
 ![image](https://user-images.githubusercontent.com/88864740/135568676-17634da7-4b01-47e7-a416-987b69364de8.png)
 
 
