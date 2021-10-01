@@ -79,7 +79,8 @@
 
     - 도메인 서열 분리 
     - Core Domain: 주문, 결제, 배송: 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 주문, 결제, 배송의 경우 1주일 1회 미만
-    - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기                                준으로 함.
+    - Supporting Domain:  -- : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을  
+                               기준으로 함.
 
 ### 폴리시 부착및 컨텍스트 매핑
 ![ddd6](https://user-images.githubusercontent.com/88864740/135375659-340778e5-86f2-43ab-b1ce-ac66c3a6092f.png)
@@ -100,14 +101,14 @@
     - 구매가 완료되면 결제가 진행된다 (ok)
     - 결제는 구매내역을 통해 결제가 진행된다. (ok)
     - 결제가 완료되면, 결제완료상태(PaymentConfirmed)로 변경된다. (ok)
-    - 꽃구독 주문이 되면 주문내역을 KUKKA 상점으로 전달한다(ok)
+    - 꽃구독 주문이 되면 주문내역을 kukka 상점으로 전달한다(ok)
     - Kukka 상점에서 꽃 구독 배송 출발한다(ok)
 
 ![ddd10](https://user-images.githubusercontent.com/88864740/135375970-6b0e55eb-cc63-4320-90ed-8424d4fa8dc8.png)
 
     - 고객이 꽃 구독 구매를 취소할 수 있다 (ok)
     - 고객이 꽃 구독 구매를 취소하면 결제가 취소된다. (ok)
-    - 결제가 취소되면 꽃 배송을 취소한다. (ok)
+    - kukka 상점에서 주문취소를 확인하면 꽃 배송을 취소한다. (ok)
     - 고객은 구매 상태와 결제 상태 등을 중간중간 조회한다. (View-green sticker 의 추가로 ok) 
 
 
@@ -119,7 +120,7 @@
     - ② : 결제 시스템이 정상 수행되지 않더라도 배송은 365일 24시간 받을 수 있어야 한다. (Pub/sub)
     - ③ : 꽃 구독 주문 시스템이 과중되면 잠시동안 구매를 받지 않고 잠시후에 진행하도록 유도한다 (Circuit breaker)
     - ④ : 고객이 꽃 구독 주문정보를 별도의 고객페이지에서 확인할 수 있어야 한다 (CQRS)
-          꽃가게 주인이 고객의 주문정보를 별도의 관리자 페이지에서 확인할 수 있어야 한다 (CQRS)     
+          kukka 상점이 고객의 주문정보를 별도의 페이지에서 확인할 수 있어야 한다 (CQRS)     
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
@@ -566,7 +567,7 @@ http POST http://localhost:8088/orders phoneNumber="01055556666" address="Jeju" 
 ![image](https://user-images.githubusercontent.com/88864740/135384854-c2cdee92-00d2-4112-be68-7cb35b723833.png)
 
 
-- gateway 테스트(aws)
+- gateway 테스트(AWS)
 
 ```
 http POST http://acc10696f75b642ab8a5c2b0f763227e-1739077027.ap-northeast-2.elb.amazonaws.com:8080/orders phoneNumber="01033334444" address="Bundang" customerName="LEE" flowerType="RandomBox" price=20000  status="Ordered"
@@ -788,7 +789,7 @@ hystrix:
 
 ```
 
-- payment 서비스 로직에 sleep 추가 
+- payment 서비스 로직(Payment.java)에 sleep 추가 
 ```
     @PostPersist
     public void onPostPersist() {
@@ -807,13 +808,14 @@ hystrix:
 ```
 
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
-- 동시사용자 100명
-- 30초 동안 실시
+- 동시사용자 50명
+- 20초 동안 실시
+- 반복횟수 10번
 
 ```
-siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"AAAA","price":10000}'
+siege -c50 -t20S -r10 -v --content-type "application/json" 'http://order:8080/orders POST {"flowerType":"BBBB","price":20000}'
 ```
-↓변경필요!!
+
 ![image](https://user-images.githubusercontent.com/84000890/124469554-783d7c00-ddd5-11eb-9c85-72e1ef9a3730.png)
 
 앞서 설정한 부하가 발생하여 Circuit Breaker가 발동, 초반에는 요청 실패처리되었으며
@@ -821,11 +823,11 @@ siege -c50 -t30S -v --content-type "application/json" 'http://order:8080/orders 
 
 - Availability 가 높아진 것을 확인 (siege) 
 ↓변경필요!!
-![image](https://user-images.githubusercontent.com/84000890/124469595-84c1d480-ddd5-11eb-9789-0f8890d09c53.png)
+![image](https://user-images.githubusercontent.com/88864740/135549169-f815ba5f-807a-4f2e-b0ca-f36d75a7fe3b.png)
 
-↓ 실패/성공 건을 보통 대략 0.9초 이상 수행 시 풀렸다가 다시 CB 동작이  것으로 확인됨
-↓변경필요!!
-![image](https://user-images.githubusercontent.com/84000890/124469629-90150000-ddd5-11eb-9d95-998554bc943e.png)
+↓ 실패/성공 건을 보통 대략 0.2초 이상 수행 시 풀렸다가 다시 CB 동작이 것으로 확인됨
+![image](https://user-images.githubusercontent.com/88864740/135549145-6179c251-9200-400f-b758-fad7acc6e887.png)
+
 
 
 
