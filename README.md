@@ -922,19 +922,38 @@ kubectl apply -f kubernetes/deployment.yml
 
 ## ConfigMap
 - req/res 호출 시 피호출되는 경로에 대해서 환경변수로 받아 처리하도록 ConfigMap적용
-
-- configmap 생성
-![image](https://user-images.githubusercontent.com/88864740/135569181-1157c490-c46c-4448-a4ab-887b6108af57.png)
-
 - order 서비스의 deployment.yml 파일에 아래 항목 추가
+
 ```
-          envFrom:
-            - configMapRef:
-                name: log-level-configmap
+          env:
+            - name: configurl			
+              valueFrom:
+                configMapKeyRef:
+                  name: apiurl
+                  key: url 
 ```
-↓ configmap 적용
 
-![image](https://user-images.githubusercontent.com/88864740/135568676-17634da7-4b01-47e7-a416-987b69364de8.png)
+- order 서비스의 application.yml 파일 설정 : local 과 cloud 다른 값으로 처리하도록 설정
 
+```
+spring:
+  profiles: default
+  
+  ....
+  
+api:
+  url:
+    payment: http://localhost:8082  
+---
+spring:
+  profiles: docker
+  
+  ....
+  
+api:
+  url:
+    payment: ${configurl} 
+```
 
+- order > PaymentService.java 에서 feignClient 호출 시 configMap 설정 데이터 가져오도록 아래 항목 추가
 
