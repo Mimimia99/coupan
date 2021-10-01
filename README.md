@@ -890,8 +890,7 @@ kubectl apply -f kubernetes/deployment.yml
 ```
 - 동일한 시나리오로 재배포 한 후 Availability 확인
   : readiness 옵션을 배포 옵션을 설정 한 경우 Availability가 배포기간 동안 변화가 없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
-![image](https://user-images.githubusercontent.com/88864740/135561781-361a2ea7-c867-4e40-8df8-6f688ac9e394.png)
+![image](https://user-images.githubusercontent.com/88864740/135561962-ec670df6-5e59-4786-8381-8afdc80d3802.png)
 
 
 ## ConfigMap
@@ -992,9 +991,8 @@ kubectl get configmap apiurl -o yaml
 ![image](https://user-images.githubusercontent.com/84000890/124466540-b46edd80-ddd1-11eb-9a60-2628073de341.png)
  
 - order에 liveness 적용 확인 
-
-![image](https://user-images.githubusercontent.com/84000890/124466634-c5b7ea00-ddd1-11eb-8f49-19e924dccd61.png)
+![image](https://user-images.githubusercontent.com/88864740/135566432-4ab57d13-b768-4687-9ab1-3ab369dbb8f8.png)
+![image](https://user-images.githubusercontent.com/88864740/135566393-c3c55085-99f2-487b-87a5-1b75b8b0b877.png)
 
 - order 서비스에 liveness가 발동되었고, 포트에 응답이 없기에 Restart가 발생함
-
-![image](https://user-images.githubusercontent.com/84000890/124466572-ba64be80-ddd1-11eb-88b8-40678c9ea1ac.png)
+![image](https://user-images.githubusercontent.com/88864740/135566300-5d9d2c68-1516-41e2-8beb-c83b81423f4a.png)
